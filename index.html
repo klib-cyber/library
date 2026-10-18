@@ -179,25 +179,44 @@ if (SpeechRecognition) {
 
 // [게임 시작] 버튼 이벤트
 startBtn.addEventListener('click', () => {
-    totalStudents = parseInt(document.getElementById('teamSize').value);
-    currentStudent = 1;
-    currentPoemIndex = Math.floor(Math.random() * poemDatabase.length);
-    currentStanzaIndex = 0;
-    totalReadChars = 0;
-    timeLeft = 900;
+    console.log('리딩런: 시작 버튼 클릭 확인');
 
-    settingsDiv.style.display = 'none';
-    startBtn.style.display = 'none';
-    nextBtn.style.display = 'inline-block';
-    resetBtn.style.display = 'inline-block';
-    readingDiv.style.display = 'block';
-    trackDiv.classList.add('running');
+    try {
+        totalStudents = parseInt(
+            document.getElementById('teamSize').value,
+            10
+        );
 
-    startTimer();
-    loadStanza();
+        currentStudent = 1;
+        currentPoemIndex = Math.floor(
+            Math.random() * poemDatabase.length
+        );
+        currentStanzaIndex = 0;
+        totalReadChars = 0;
+        timeLeft = 900;
 
-    if (recognition) {
-        try { recognition.start(); } catch(e) {}
+        settingsDiv.style.display = 'none';
+        startBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'inline-block';
+        readingDiv.style.display = 'block';
+        trackDiv.classList.add('running');
+
+        startTimer();
+        loadStanza();
+
+        if (recognition) {
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('음성 인식 시작 오류:', e);
+                statusDiv.innerText =
+                    '마이크를 시작할 수 없습니다. 브라우저 권한을 확인해 주세요.';
+            }
+        }
+    } catch (error) {
+        console.error('게임 시작 오류:', error);
+        alert('게임 시작 중 오류가 발생했습니다: ' + error.message);
     }
 });
 
