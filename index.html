@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <title>우리 반 AI 리딩런</title>
     <style>
-        body { 
-            font-family: 'Malgun Gothic', sans-serif; 
-            text-align: center; 
-            background-color: #2f7bf2; 
-            color: white;
-            margin: 0;
-            padding: 20px 10px; 
+       timerInterval = setInterval(() => {
+                timeLeft--;
+                let mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+                let secs = String(timeLeft % 60).padStart(2, '0');
+                // 문자열 결합 문법 오류 완벽 수정
+                document.getElementById("timer").innerText = "제한시간: " + mins + ":" + secs;
+; 
         }
         .header-container { margin-bottom: 20px; color: white; }
         .main-title { font-size: 56px; font-weight: 900; margin: 0; text-shadow: 3px 3px 0px #1a52b8; letter-spacing: -1px; }
@@ -182,7 +182,7 @@
 
     <div class="footer-banner">
         <div class="info-tag">행사명<span>2026 제10회 연가 책잔치</span></div>
-        <div class="info-tag">장소<span>도서실, 연수실</span></div>
+        <div class="info-tag">장소<span>도서실</span></div>
     </div>
 
     <script>
