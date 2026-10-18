@@ -526,8 +526,8 @@ function startRecognition() {
     }
 
     recognizedText = finalizedTranscript + interim;
-
-    setStatus(
+renderText();
+    renderText();setStatus(
       "🎤 음성인식 중 · 인식된 글자 " +
       countCharacters(recognizedText) + "자"
     );
