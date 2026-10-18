@@ -1,254 +1,349 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>우리 반 AI 리딩런</title>
-    <style>
-        /* 🎨 화면 전체를 세로·가로 모두 정중앙 정렬하기 위한 스타일 설정 */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #2f7bf2; 
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 반 AI 리딩런</title>
+<style>
+* { box-sizing: border-box; }
 
-        body { 
-            font-family: 'Malgun Gothic', sans-serif; 
-            text-align: center; 
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* 세로 기준 정중앙 정렬 */
-            align-items: center;     /* 가로 기준 정중앙 정렬 */
-            box-sizing: border-box;
-            padding: 20px;
-        }
-        
-        /* 전체 콘텐츠를 감싸는 내부 컨테이너 (정렬의 중심) */
-        .game-wrapper {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .header-container { margin-bottom: 15px; color: white; }
-        .main-title { font-size: 56px; font-weight: 900; margin: 0; text-shadow: 3px 3px 0px #1a52b8; letter-spacing: -1px; }
-        .eng-title { font-size: 28px; font-weight: bold; color: #ffffff; opacity: 0.9; margin: 5px 0 10px 0; font-family: 'Arial Black', sans-serif; }
-        .subtitle { font-size: 20px; font-weight: bold; color: #ffeb3b; background: rgba(0,0,0,0.2); display: inline-block; padding: 6px 20px; border-radius: 50px; margin: 0; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
 
-        .dashboard {
-            width: 100%;
-            max-width: 900px;
-            margin: 15px auto 10px auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 50px;
-            box-sizing: border-box;
-        }
-        #turn-notice {
-            font-size: 20px;
-            font-weight: bold;
-            color: #ff7e54;
-            background-color: #ffffff;
-            padding: 8px 18px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            visibility: hidden;
-        }
-        #timer { font-size: 32px; font-weight: bold; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+body {
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  background: #2f7bf2;
+  color: white;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 14px;
+}
 
-        .track-container {
-            width: 100%;
-            max-width: 900px;
-            height: 160px;
-            background-color: #ff7e54; 
-            border-radius: 12px;
-            border-top: 6px solid #4ade80; 
-            border-bottom: 6px solid #1a52b8;
-            position: relative;
-            box-shadow: inset 0 5px 10px rgba(0,0,0,0.2), 0 4px 15px rgba(0,0,0,0.15);
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-        .track-lane {
-            position: absolute;
-            left: 0; right: 0; top: 50%;
-            height: 2px;
-            border-top: 2px dashed rgba(255,255,255,0.6);
-        }
+.game-wrapper {
+  width: 100%;
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-        .runner-group {
-            position: absolute;
-            left: 5%; 
-            top: 25px;
-            display: flex;
-            gap: 18px;
-            transition: left 0.3s ease-out; 
-        }
-        .book-character {
-            width: 45px;
-            height: 55px;
-            border-radius: 6px;
-            position: relative;
-            box-shadow: 2px 4px 5px rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .char-red { background-color: #ef4444; color: white; border-left: 5px solid #b91c1c; }
-        .char-yellow { background-color: #facc15; color: black; border-left: 5px solid #ca8a04; }
-        .char-green { background-color: #4ade80; color: white; border-left: 5px solid #16a34a; }
-        
-        .book-character::before {
-            content: '👀';
-            position: absolute;
-            top: 8px;
-            font-size: 14px;
-        }
+.main-title {
+  font-size: clamp(42px, 7vw, 65px);
+  font-weight: 900;
+  margin: 0;
+  text-shadow: 3px 4px #1a52b8;
+}
 
-        /* 🏃‍♂️ 달리는 팔다리 레이아웃 및 디자인 */
-        .limb {
-            position: absolute;
-            background-color: #222;
-            border-radius: 10px;
-        }
-        .arm-l { width: 12px; height: 4px; left: -10px; top: 25px; transform-origin: right center; }
-        .arm-r { width: 12px; height: 4px; right: -10px; top: 25px; transform-origin: left center; }
-        .leg-l { width: 5px; height: 14px; left: 12px; bottom: -13px; transform-origin: center top; }
-        .leg-r { width: 5px; height: 14px; right: 12px; bottom: -13px; transform-origin: center top; }
+.eng-title {
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin: 5px 0 12px;
+}
 
-        .running .book-character {
-            animation: bodyBounce 0.3s infinite alternate ease-in-out;
-        }
-        .running .arm-l { animation: leftArmSwing 0.3s infinite alternate linear; }
-        .running .arm-r { animation: rightArmSwing 0.3s infinite alternate linear; }
-        .running .leg-l { animation: leftLegRun 0.3s infinite alternate linear; }
-        .running .leg-r { animation: rightLegRun 0.3s infinite alternate linear; }
+.subtitle {
+  display: inline-block;
+  background: #245fc1;
+  color: #ffeb3b;
+  border-radius: 30px;
+  padding: 10px 22px;
+  font-weight: bold;
+  font-size: 18px;
+}
 
-        .running .char-yellow, .running .char-yellow .limb { animation-delay: 0.08s; }
-        .running .char-green, .running .char-green .limb { animation-delay: 0.15s; }
+.dashboard {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 12px;
+}
 
-        @keyframes bodyBounce {
-            0% { transform: translateY(0) rotate(2deg); }
-            100% { transform: translateY(-10px) rotate(-2deg); }
-        }
-        @keyframes leftArmSwing { 0% { transform: rotate(40deg); } 100% { transform: rotate(-40deg); } }
-        @keyframes rightArmSwing { 0% { transform: rotate(-40deg); } 100% { transform: rotate(40deg); } }
-        @keyframes leftLegRun { 0% { transform: rotate(45deg); } 100% { transform: rotate(-45deg); } }
-        @keyframes rightLegRun { 0% { transform: rotate(-45deg); } 100% { transform: rotate(45deg); } }
+#turn-notice {
+  background: white;
+  color: #ef694c;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+}
 
-        #text-container { 
-            width: 100%;
-            max-width: 900px; 
-            min-height: 320px;
-            margin: 20px auto; 
-            padding: 40px; 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            line-height: 1.8; 
-            font-size: 32px; 
-            text-align: left; 
-            word-break: break-all; 
-            white-space: pre-wrap; 
-            box-sizing: border-box;
-            color: #333333;
-            display: none; 
-        }
-        
-        .word { display: inline-block; color: #a0aec0; transition: all 0.05s; }
-        
-        .highlight { 
-            background: linear-gradient(to top, #fff200 100%, transparent 0);
-            color: #000; 
-            font-weight: bold; 
-            border-radius: 4px; 
-            padding: 0 2px; 
-            transition: background 0.05s linear;
-        }
-        
-        button { font-size: 24px; padding: 15px 40px; margin: 20px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 6px 12px rgba(0,0,0,0.2); transition: all 0.2s; }
-        #start-btn { background-color: #4ade80; color: white; border: 3px solid white; }
-        #start-btn:hover { transform: scale(1.05); background-color: #22c55e; }
-        
-        #result-box { font-size: 36px; font-weight: bold; color: #1e90ff; margin: 20px auto; background: #e1f5fe; padding: 25px; border-radius: 16px; display: inline-block; width: 100%; max-width: 900px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); box-sizing: border-box; }
+#timer {
+  font-size: 30px;
+  font-weight: 900;
+}
 
-        .footer-banner {
-            width: 100%;
-            max-width: 900px;
-            margin: 20px auto 0 auto;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-        .info-tag {
-            background-color: white;
-            color: #2f7bf2;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .info-tag span { color: #333; margin-left: 8px; }
-    </style>
+.track-container {
+  position: relative;
+  width: 100%;
+  height: 155px;
+  background: #ff7e54;
+  border-top: 7px solid #4ade80;
+  border-bottom: 7px solid #1a52b8;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 7px 18px #174aa0;
+}
+
+.track-lane {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  border-top: 3px dashed #ffffff99;
+}
+
+.runner-group {
+  position: absolute;
+  left: 4%;
+  top: 40px;
+  display: flex;
+  gap: 14px;
+  transition: left .5s ease;
+}
+
+.book-character {
+  width: 48px;
+  height: 62px;
+  border-radius: 7px;
+  border-left: 6px solid #0003;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  box-shadow: 3px 4px 5px #0003;
+}
+
+.char-red { background: #ef4444; }
+.char-yellow { background: #facc15; }
+.char-green { background: #4ade80; }
+
+.running .book-character {
+  animation: bounce .32s infinite alternate;
+}
+
+.running .char-yellow { animation-delay: .1s; }
+.running .char-green { animation-delay: .2s; }
+
+@keyframes bounce {
+  from { transform: translateY(0) rotate(-4deg); }
+  to { transform: translateY(-13px) rotate(4deg); }
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+button {
+  border: 0;
+  border-radius: 40px;
+  padding: 13px 24px;
+  font-size: 19px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 5px 10px #0002;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+#start-btn {
+  background: #4ade80;
+  color: #12492c;
+  border: 3px solid white;
+  font-size: 24px;
+}
+
+#next-btn { background: #ffeb3b; color: #333; }
+#restart-btn { background: white; color: #2f7bf2; }
+
+.settings {
+  background: #ffffff20;
+  padding: 14px;
+  border-radius: 14px;
+  width: 100%;
+  margin-top: 15px;
+}
+
+select {
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 0;
+  margin-left: 8px;
+}
+
+#reading-panel {
+  width: 100%;
+  display: none;
+}
+
+.poem-header {
+  margin-top: 12px;
+  font-size: 21px;
+  font-weight: bold;
+}
+
+#text-container {
+  width: 100%;
+  min-height: 260px;
+  max-height: 48vh;
+  overflow-y: auto;
+  margin: 15px auto;
+  padding: 30px;
+  background: white;
+  color: #333;
+  border-radius: 16px;
+  font-size: clamp(24px, 3.4vw, 34px);
+  line-height: 1.9;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-shadow: 0 8px 20px #0002;
+}
+
+.word { color: #777; }
+.word.done { color: #16834b; font-weight: bold; }
+.word.current {
+  background: #fff200;
+  color: black;
+  border-radius: 5px;
+}
+
+#status {
+  font-size: 16px;
+  margin: 10px 0;
+  color: #fff4b5;
+  font-weight: bold;
+}
+
+#result-box {
+  display: none;
+  width: 100%;
+  background: white;
+  color: #2464c8;
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 20px;
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.footer-banner {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.info-tag {
+  background: white;
+  color: #2f7bf2;
+  padding: 8px 14px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  .dashboard { justify-content: center; }
+  .track-container { height: 130px; }
+  .runner-group { transform: scale(.75); transform-origin: left center; }
+  #text-container { padding: 20px 14px; }
+}
+</style>
 </head>
+
 <body>
+<div class="game-wrapper">
 
-    <!-- 중앙 정렬 메인 컨테이너 시작 -->
-    <div class="game-wrapper">
+  <header>
+    <h1 class="main-title">리딩런</h1>
+    <div class="eng-title">READING RUN</div>
+    <div class="subtitle">우리 반 릴레이 낭독 챌린지 🏃</div>
+  </header>
 
-        <div class="header-container">
-            <h1 class="main-title">리딩런</h1>
-            <div class="eng-title">READING RUN</div>
-            <p class="subtitle">우리반 릴레이 낭독 챌린지 🏃‍♂️🏃‍♀️</p>
-        </div>
-        
-        <div class="dashboard">
-            <div id="turn-notice">📢 다음 차례 사람이 읽으세요!</div>
-            <div id="timer">제한시간: 15:00</div>
-        </div>
-        
-        <div class="track-container" id="track-zone">
-            <div class="track-lane"></div>
-            <div class="runner-group" id="runners">
-                <div class="book-character char-red">
-                    <div class="limb arm-l"></div><div class="limb arm-r"></div>
-                    <div class="limb leg-l"></div><div class="limb leg-r"></div>
-                    😆
-                </div>
-                <div class="book-character char-yellow">
-                    <div class="limb arm-l"></div><div class="limb arm-r"></div>
-                    <div class="limb leg-l"></div><div class="limb leg-r"></div>
-                    😀
-                </div>
-                <div class="book-character char-green">
-                    <div class="limb arm-l"></div><div class="limb arm-r"></div>
-                    <div class="limb leg-l"></div><div class="limb leg-r"></div>
-                    😊
-                </div>
-            </div>
-        </div>
+  <div class="dashboard">
+    <div id="turn-notice">📢 게임을 시작해 주세요!</div>
+    <div id="timer">제한시간 15:00</div>
+  </div>
 
-        <button id="start-btn" onclick="startGame()">게임 시작!</button>
-        <br>
-        <div id="result-box" style="display:none;"></div>
-
-        <div id="text-container"></div>
-
-        <div class="footer-banner">
-            <div class="info-tag">행사명<span>2026 제10회 연가 책잔치</span></div>
-            <div class="info-tag">장소<span>도서실, 연수실</span></div>
-        </div>
-
+  <div class="track-container">
+    <div class="track-lane"></div>
+    <div class="runner-group" id="runners">
+      <div class="book-character char-red">😆</div>
+      <div class="book-character char-yellow">😀</div>
+      <div class="book-character char-green">😊</div>
     </div>
+  </div>
 
-    <script>
+  <div class="settings" id="settings">
+    <label for="team-size">참가 학생 수</label>
+    <select id="team-size">
+      <option value="1">1명</option>
+      <option value="2">2명</option>
+      <option value="3">3명</option>
+      <option value="4">4명</option>
+      <option value="5">5명</option>
+      <option value="6">6명</option>
+      <option value="7">7명</option>
+      <option value="8">8명</option>
+      <option value="9" selected>9명</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <button id="start-btn">🏁 게임 시작!</button>
+    <button id="next-btn" hidden>➡️ 이 연 완료 · 다음 차례</button>
+    <button id="restart-btn" hidden>🔄 새 게임</button>
+  </div>
+
+  <div id="reading-panel">
+    <div class="poem-header" id="poem-header"></div>
+    <div id="text-container"></div>
+    <div id="status" aria-live="polite"></div>
+  </div>
+
+  <div id="result-box"></div>
+
+  <div class="footer-banner">
+    <div class="info-tag">2026 제10회 연가 책잔치</div>
+    <div class="info-tag">도서실 · 연수실</div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/*
+ * 여기에 기존 poemDatabase의 시 30편을 붙여넣으세요.
+ *
+ * 형식:
+ * {
+ *   title: "시 제목",
+ *   stanzas: ["첫 번째 연", "두 번째 연"]
+ * }
+ *
+ * 아래 두 편은 작동 확인용으로 만든 예시 문장입니다.
+ */
+
+const poemDatabase = [
+ <script>
         // 💾 시 세트 데이터베이스 (이 아랫줄부터 가지고 계신 시 데이터를 그대로 이어 붙이시면 됩니다!)
 
 
@@ -490,21 +585,509 @@
             }
         ];
 
-        let selectedPoem = null; 
-        let currentStanzaIndex = 0; 
-        let currentWordIndex = 0; 
-        let wordsInStanza = []; 
-        let totalWordsInPoem = 0; 
-        let clearedWordsCount = 0; 
-        
-        let totalDistance = 0; 
-        let timeLeft = 15 * 60; 
-        let timerInterval;
-        let recognition;
-        let isGameRunning = false;
+const GAME_SECONDS = 15 * 60;
 
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = true;
+const $ = id => document.getElementById(id);
+
+let running = false;
+let deadline = 0;
+let timerInterval = null;
+let recognition = null;
+let listening = false;
+let speechSupported = false;
+let startingRecognition = false;
+
+let teamSize = 9;
+let studentIndex = 0;
+let poemOrder = [];
+let poemOrderIndex = 0;
+let stanzaIndex = 0;
+let currentWords = [];
+let wordIndex = 0;
+let completedStanzas = 0;
+let totalStanzas = 0;
+let totalCompleted = 0;
+let currentPoem = null;
+let advancing = false;
+
+function shuffle(items) {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return String(m).padStart(2, "0") + ":" +
+         String(s).padStart(2, "0");
+}
+
+function normalize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+function tokenize(text) {
+  return text.match(/[^\s]+/g) || [];
+}
+
+function updateTimer() {
+  if (!running) return;
+
+  const remaining = Math.max(
+    0,
+    Math.ceil((deadline - Date.now()) / 1000)
+  );
+
+  $("timer").textContent =
+    "남은 시간 " + formatTime(remaining);
+
+  if (remaining <= 0) {
+    finishGame();
+  }
+}
+
+function updateProgress() {
+  const ratio = totalStanzas
+    ? Math.min(1, completedStanzas / totalStanzas)
+    : 0;
+
+  const runners = $("runners");
+  const track = runners.parentElement;
+  const available = Math.max(
+    0,
+    track.clientWidth - runners.offsetWidth - 20
+  );
+
+  const position = 10 + available * ratio;
+  runners.style.left = position + "px";
+}
+
+function updateNotice() {
+  $("turn-notice").textContent =
+    "📢 " + (studentIndex + 1) +
+    "번 학생이 읽으세요!";
+}
+
+function renderStanza() {
+  if (!running || !currentPoem) return;
+
+  const stanza = currentPoem.stanzas[stanzaIndex];
+
+  if (typeof stanza !== "string") {
+    advanceStanza();
+    return;
+  }
+
+  currentWords = tokenize(stanza);
+  wordIndex = 0;
+
+  $("poem-header").textContent =
+    "📖 " + currentPoem.title +
+    " · " + (stanzaIndex + 1) +
+    "/" + currentPoem.stanzas.length + "연";
+
+  renderWords(stanza);
+  updateNotice();
+
+  $("status").textContent =
+    speechSupported
+      ? "🎤 학생이 화면의 문장을 읽어 주세요."
+      : "🎤 자동 음성 인식을 사용할 수 없습니다. 수동 버튼으로 진행해 주세요.";
+}
+
+function renderWords(stanza) {
+  const container = $("text-container");
+  container.replaceChildren();
+
+  const parts = stanza.split(/(\s+)/);
+  let index = 0;
+
+  for (const part of parts) {
+    if (!part) continue;
+
+    if (/^\s+$/.test(part)) {
+      container.appendChild(
+        document.createTextNode(part)
+      );
+    } else {
+      const span = document.createElement("span");
+      span.className = "word";
+      span.textContent = part;
+      span.dataset.index = index++;
+      container.appendChild(span);
+    }
+  }
+
+  paintWords();
+}
+
+function paintWords() {
+  const spans =
+    $("text-container").querySelectorAll(".word");
+
+  spans.forEach((span, index) => {
+    span.className = "word";
+
+    if (index < wordIndex) {
+      span.classList.add("done");
+    } else if (index === wordIndex) {
+      span.classList.add("current");
+    }
+  });
+}
+
+function speechMatches(expected, spoken) {
+  const a = normalize(expected);
+  const b = normalize(spoken);
+
+  if (!a || !b) return false;
+  if (a === b) return true;
+
+  // 긴 단어에서 조사나 인식 차이가 발생한 경우
+  if (a.length >= 3 && b.length >= 3) {
+    if (a.includes(b) || b.includes(a)) return true;
+  }
+
+  return false;
+}
+
+function processSpeech(transcript) {
+  if (!running || advancing) return;
+
+  const heardWords = tokenize(transcript);
+  if (!heardWords.length) return;
+
+  let matched = 0;
+
+  for (let i = 0; i < heardWords.length; i++) {
+    if (wordIndex >= currentWords.length) break;
+
+    const expected = currentWords[wordIndex];
+
+    if (speechMatches(expected, heardWords[i])) {
+      wordIndex++;
+      matched++;
+      continue;
+    }
+
+    // 음성 인식에서 단어 하나가 누락된 경우
+    if (
+      wordIndex + 1 < currentWords.length &&
+      speechMatches(currentWords[wordIndex + 1], heardWords[i])
+    ) {
+      wordIndex += 2;
+      matched++;
+    }
+  }
+
+  if (matched > 0) {
+    paintWords();
+  }
+
+  if (
+    currentWords.length > 0 &&
+    wordIndex >= currentWords.length
+  ) {
+    advanceStanza();
+  }
+}
+
+function setupRecognition() {
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    speechSupported = false;
+    return;
+  }
+
+  speechSupported = true;
+  recognition = new SpeechRecognition();
+  recognition.lang = "ko-KR";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    listening = true;
+    startingRecognition = false;
+    if (running) {
+      $("status").textContent =
+        "🎤 마이크 연결됨 · 낭독 중";
+    }
+  };
+
+  recognition.onresult = event => {
+    if (!running || advancing) return;
+
+    /*
+     * 중간 결과는 확정 결과와 중복될 수 있어
+     * 진행 판정에는 확정 결과만 사용합니다.
+     */
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+      const result = event.results[i];
+
+      if (result.isFinal) {
+        processSpeech(result[0].transcript);
+      }
+    }
+  };
+
+  recognition.onerror = event => {
+    listening = false;
+    startingRecognition = false;
+
+    if (!running) return;
+
+    if (
+      event.error === "not-allowed" ||
+      event.error === "service-not-allowed"
+    ) {
+      speechSupported = false;
+      $("status").textContent =
+        "⚠️ 마이크 권한이 거부되었습니다. 수동 버튼으로 진행하세요.";
+    } else {
+      $("status").textContent =
+        "⚠️ 음성 인식 연결 문제: " +
+        event.error +
+        " · 수동 진행 가능";
+    }
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    startingRecognition = false;
+
+    if (running && speechSupported) {
+      setTimeout(() => {
+        if (running && !listening) {
+          startListening();
+        }
+      }, 400);
+    }
+  };
+}
+
+function startListening() {
+  if (
+    !running ||
+    !recognition ||
+    !speechSupported ||
+    listening ||
+    startingRecognition
+  ) return;
+
+  try {
+    startingRecognition = true;
+    recognition.start();
+  } catch (error) {
+    startingRecognition = false;
+    $("status").textContent =
+      "⚠️ 마이크 시작 실패 · 수동 진행 가능";
+  }
+}
+
+function stopListening() {
+  if (!recognition) return;
+
+  try {
+    recognition.abort();
+  } catch (error) {
+    // 이미 종료된 상태일 수 있음
+  }
+
+  listening = false;
+  startingRecognition = false;
+}
+
+function startGame() {
+  if (running) return;
+
+  const validPoems = poemDatabase.filter(poem =>
+    poem &&
+    typeof poem.title === "string" &&
+    Array.isArray(poem.stanzas) &&
+    poem.stanzas.length > 0 &&
+    poem.stanzas.every(s => typeof s === "string")
+  );
+
+  if (!validPoems.length) {
+    alert("읽을 시 데이터가 없습니다.");
+    return;
+  }
+
+  running = true;
+  teamSize = Number($("team-size").value);
+  studentIndex = 0;
+  stanzaIndex = 0;
+  poemOrderIndex = 0;
+  completedStanzas = 0;
+  totalCompleted = 0;
+  advancing = false;
+
+  poemOrder = shuffle(validPoems);
+  totalStanzas = poemOrder.reduce(
+    (sum, poem) => sum + poem.stanzas.length,
+    0
+  );
+
+  currentPoem = poemOrder[0];
+
+  deadline = Date.now() + GAME_SECONDS * 1000;
+
+  $("settings").hidden = true;
+  $("start-btn").hidden = true;
+  $("restart-btn").hidden = false;
+  $("next-btn").hidden = false;
+  $("reading-panel").style.display = "block";
+  $("result-box").style.display = "none";
+
+  $("runners").style.left = "10px";
+  $("runners").classList.add("running");
+
+  renderStanza();
+  updateTimer();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 250);
+
+  if (!recognition) setupRecognition();
+  startListening();
+}
+
+function advanceStanza() {
+  if (!running || advancing) return;
+
+  advancing = true;
+  completedStanzas++;
+  totalCompleted++;
+  updateProgress();
+
+  stanzaIndex++;
+  studentIndex = (studentIndex + 1) % teamSize;
+
+  if (stanzaIndex >= currentPoem.stanzas.length) {
+    poemOrderIndex++;
+
+    if (poemOrderIndex >= poemOrder.length) {
+      finishGame(true);
+      return;
+    }
+
+    currentPoem = poemOrder[poemOrderIndex];
+    stanzaIndex = 0;
+  }
+
+  /*
+   * 짧은 안내 시간을 준 뒤 다음 연 표시.
+   * 학생이 바뀌는 동안 기존 인식 결과를 무시합니다.
+   */
+  $("turn-notice").textContent =
+    "👏 잘했어요! 다음 학생 준비!";
+
+  $("status").textContent =
+    "다음 차례 학생이 준비해 주세요.";
+
+  setTimeout(() => {
+    if (!running) return;
+
+    advancing = false;
+    renderStanza();
+  }, 1200);
+}
+
+function finishGame(allRead = false) {
+  if (!running) return;
+
+  running = false;
+  clearInterval(timerInterval);
+  stopListening();
+
+  $("runners").classList.remove("running");
+  $("reading-panel").style.display = "none";
+  $("next-btn").hidden = true;
+
+  $("turn-notice").textContent =
+    "🎉 리딩런 종료!";
+
+  if (!allRead) {
+    $("timer").textContent = "남은 시간 00:00";
+  }
+
+  const result = $("result-box");
+  result.style.display = "block";
+  result.replaceChildren();
+
+  const heading = document.createElement("div");
+  heading.textContent = allRead
+    ? "🎉 모든 시를 완주했어요!"
+    : "🎉 15분 리딩런 종료!";
+
+  const score = document.createElement("div");
+  score.style.marginTop = "15px";
+  score.textContent =
+    "완료한 연: " + totalCompleted + "개";
+
+  const message = document.createElement("div");
+  message.style.fontSize = "20px";
+  message.style.marginTop = "12px";
+  message.textContent =
+    "친구들과 함께한 멋진 낭독 도전! 👏";
+
+  result.append(heading, score, message);
+}
+
+function resetGame() {
+  running = false;
+  advancing = false;
+
+  clearInterval(timerInterval);
+  stopListening();
+
+  $("runners").classList.remove("running");
+  $("runners").style.left = "10px";
+
+  $("timer").textContent = "제한시간 15:00";
+  $("turn-notice").textContent =
+    "📢 게임을 시작해 주세요!";
+
+  $("settings").hidden = false;
+  $("start-btn").hidden = false;
+  $("restart-btn").hidden = true;
+  $("next-btn").hidden = true;
+
+  $("reading-panel").style.display = "none";
+  $("result-box").style.display = "none";
+  $("text-container").replaceChildren();
+}
+
+$("start-btn").addEventListener("click", startGame);
+
+$("next-btn").addEventListener("click", () => {
+  if (running) advanceStanza();
+});
+
+$("restart-btn").addEventListener("click", () => {
+  if (confirm("현재 게임을 종료하고 새로 시작할까요?")) {
+    resetGame();
+  }
+});
+
+// 초기 화면
+resetGame();
+</script>
+</body>
+</html>
 
 
