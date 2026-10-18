@@ -6,50 +6,117 @@
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; text-align: center; background-color: #f4f7f6; padding: 20px; }
         h1 { color: #333; }
-        #timer { font-size: 32px; font-weight: bold; color: #ff4757; margin: 10px; }
-        #text-container { max-width: 800px; margin: 20px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); line-height: 2; font-size: 28px; text-align: left; word-break: break-all; }
-        .word { display: inline-block; margin-right: 8px; color: #7f8c8d; transition: all 0.2s; }
-        .highlight { background-color: #fff200; color: #000; font-weight: bold; border-radius: 4px; padding: 0 4px; }
+        
+        /* 대시보드 레이아웃 설정 */
+        .dashboard {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        /* 4번 조건: 왼쪽 상단 순서 교체 문구 */
+        #turn-notice {
+            font-size: 22px;
+            font-weight: bold;
+            color: #e67e22;
+            background-color: #fdf2e9;
+            padding: 8px 18px;
+            border-left: 5px solid #e67e22;
+            border-radius: 4px;
+            visibility: hidden; /* 첫 연에서는 숨김 */
+        }
+
+        #timer { font-size: 32px; font-weight: bold; color: #ff4757; }
+        
+        /* 3번 조건: 텍스트 박스의 크기를 여유 있게 변경 */
+        #text-container { 
+            max-width: 900px; 
+            min-height: 400px; /* 세로 크기 여유 있게 확보 */
+            margin: 20px auto; 
+            padding: 40px; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            line-height: 1.8; 
+            font-size: 32px; /* 초등학생을 위해 글씨 크기 확대 */
+            text-align: left; 
+            word-break: break-all; 
+            /* 4번 조건: 띄어쓰기와 줄바꿈 허용 */
+            white-space: pre-wrap; 
+            box-sizing: border-box;
+        }
+        
+        /* 음성 인식 전 기본 단어 색상 */
+        .word { display: inline-block; color: #7f8c8d; transition: all 0.05s; }
+        
+        /* 5번 조건: 형광펜 하이라이트 속도 딜레이 줄임 */
+        .highlight { 
+            background: linear-gradient(to top, #fff200 100%, transparent 0);
+            color: #000; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            padding: 0 2px; 
+            transition: background 0.05s linear; /* 0.2s에서 0.05s로 즉각 반응하도록 변경 */
+        }
+        
         button { font-size: 20px; padding: 12px 30px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #start-btn { background-color: #2ed573; color: white; }
-        #result-box { display: none; font-size: 36px; font-weight: bold; color: #1e90ff; margin-top: 20px; background: #e1f5fe; padding: 20px; border-radius: 8px; display: inline-block; }
+        #result-box { font-size: 36px; font-weight: bold; color: #1e90ff; margin-top: 20px; background: #e1f5fe; padding: 20px; border-radius: 8px; display: inline-block; }
     </style>
 </head>
 <body>
 
     <h1>🏃‍♂️ 우리 반 AI 리딩런 (Reading Run) 🏃‍♀️</h1>
-    <div id="timer">제한시간: 01:00</div>
+    
+    <div class="dashboard">
+        <!-- 4번 조건: 왼쪽 상단 순서 교체 문구 영역 -->
+        <div id="turn-notice">📢 다음 차례 사람이 읽으세요!</div>
+        <!-- 1번 조건: 제한시간 15분 초기 설정 -->
+        <div id="timer">제한시간: 15:00</div>
+    </div>
     
     <button id="start-btn" onclick="startGame()">게임 시작!</button>
     <br>
     <div id="result-box" style="display:none;"></div>
 
-    <!-- 💡 아래의 문장들을 학교 행사에 맞게 수정하시면 됩니다. 띄어쓰기 기준으로 블럭이 이동합니다. -->
-    <div id="text-container"></div>
+    <div id="text-container">하단의 시작 버튼을 누르면 낭독이 시작됩니다. 접속할 때마다 새로운 시 세트가 무작위로 배정됩니다.</div>
 
     <script>
-        // 행사에 사용할 본문 텍스트 (아이들이 읽을 책 내용으로 자유롭게 바꾸세요)
-        const sampleText = "<맨발> 헌 신문지는 가벼워서 돗자리 대신 가지고 다니면 좋다 돗자리 대신 가지고 다니면 좋다 바닥에 펴 놓고 깔고 앉기도 하고 가방을 얹기도 하고 더러운 것을 살짝 덮어 놓기도 하는 헌 신문지 서울역 지하도에는 바닥에 헌 신문지를 깔고 그 밑에 몸을 뉜 사람들이 있다 엉덩이도 가방도 눈길도 닿기 싫어하는 바닥에 껌처럼 바짝 달아붙어 바닥이 돼 버린 사람들 헌 신문지 한두 장으로 가리지 못한 맨발이 춥다";
+        // 💾 시 세트 데이터베이스 (사이트 접속 시 무작위 추출되나, 연(Stanza)의 순서는 원본 그대로 유지됨)
+        const poemDatabase = [
+            {
+                title: "맨발 (문태준)",
+                stanzas: [
+                    "헌 신문지는 가벼워서\n돗자리 대신 가지고 다니면 좋다\n돗자리 대신 가지고 다니면 좋다\n바닥에 펴 놓고 깔고 앉기도 하고\n가방을 얹기도 하고",
+                    "더러운 것을 살짝 덮어 놓기도 하는\n헌 신문지\n서울역 지하도에는 바닥에 헌 신문지를 깔고\n그 밑에 몸을 뉜 사람들이 있다",
+                    "엉덩이도 가방도 눈길도 닿기 싫어하는 바닥에\n껌처럼 바짝 달아붙어 바닥이 돼 버린 사람들\n헌 신문지 한두 장으로 가리지 못한\n맨발이 춥다"
+                ]
+            },
+            {
+                title: "서시 (윤동주)",
+                stanzas: [
+                    "죽는 날까지 하늘을 우러러\n한 점 부끄럼이 없기를,\n잎새에 이는 바람에도\n나는 괴로워했다.",
+                    "별을 노래하는 마음으로\n모든 죽어가는 것을 사랑해야지\n그리고 나한테 주어진 길을\n걸어가야겠다.",
+                    "오늘 밤에도 별이 바람에 스치운다."
+                ]
+            }
+        ];
+
+        let selectedPoem = null; // 선택된 시 오브젝트
+        let currentStanzaIndex = 0; // 현재 몇 번째 연인지 고유 번호
+        let currentWordIndex = 0; // 현재 연 안에서 몇 번째 단어인지 고유 번호
+        let wordsInStanza = []; // 현재 연의 단어 배열
         
-        const words = sampleText.split(" ");
-        let currentWordIndex = 0;
-        let totalCharacters = 0;
-        let timeLeft = 60; // 💡 제한시간 설정 (초 단위, 현재 60초)
+        let totalDistance = 0; // 2번 조건: 누적 전진 거리
+        let timeLeft = 15 * 60; // 1번 조건: 제한시간 15분 (900초)
         let timerInterval;
         let recognition;
-        let isGameRunning = false; // 게임 상태 관리 변수 추가
+        let isGameRunning = false;
 
-        // 화면에 문장 배치
-        const container = document.getElementById("text-container");
-        words.forEach((word, index) => {
-            const span = document.createElement("span");
-            span.innerText = word;
-            span.className = "word";
-            span.id = "word-" + index;
-            container.appendChild(span);
-        });
-
-        // 음성인식 세팅 (크롬 표준 기능 사용)
+        // 음성인식 세팅 (크롬 표준 기능)
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = true;
@@ -57,6 +124,8 @@
             recognition.lang = 'ko-KR';
 
             recognition.onresult = function(event) {
+                if (!isGameRunning) return;
+
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (!event.results[i].isFinal) {
@@ -64,49 +133,50 @@
                     }
                 }
                 
-                // 말한 단어가 화면의 단어와 유사한지 실시간 비교
                 if (interimTranscript.trim().length > 0) {
                     let spoken = interimTranscript.trim().replace(/ /g, "");
-                    let targetWord = words[currentWordIndex].replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()]/g,"");
+                    let targetWord = wordsInStanza[currentWordIndex].replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()\n]/g,"");
                     
                     if (spoken.includes(targetWord) || targetWord.includes(spoken)) {
                         highlightWord(currentWordIndex);
                         currentWordIndex++;
+
+                        // 4번 조건: 현재 화면(연)의 모든 단어를 다 읽었을 때 처리
+                        if (currentWordIndex >= wordsInStanza.length) {
+                            setTimeout(nextStanza, 600); // 부드러운 전환을 위해 0.6초 딜레이 후 다음 연으로 이동
+                        }
                     }
                 }
             };
 
-            // [보완] 마이크 무음이나 에러가 나도 게임 도중엔 자동으로 재시작하도록 처리
             recognition.onerror = function(event) {
                 console.log("음성 인식 에러 발생:", event.error);
-                if (event.error === 'not-allowed') {
-                    alert("브라우저 주소창 왼쪽의 자물쇠 아이콘을 눌러 마이크 권한을 '허용'으로 변경해주세요!");
-                }
             };
 
-            // [보완] 소리가 안 들려 끊겼을 때 게임 중이라면 자동으로 마이크 다시 켜기
             recognition.onend = function() {
                 if (isGameRunning) {
                     try { recognition.start(); } catch(e) {}
                 }
             };
-
         } else {
             alert("크롬(Chrome) 브라우저에서만 작동하는 프로그램입니다.");
         }
 
+        // 게임 시작
         function startGame() {
-            isGameRunning = true; // 게임 시작 상태 활성화
+            isGameRunning = true;
             document.getElementById("start-btn").style.display = "none";
             document.getElementById("result-box").style.display = "none";
-            currentWordIndex = 0;
-            totalCharacters = 0;
-            timeLeft = 60; // 시간 초기화
             
-            // 하이라이트 초기화
-            document.querySelectorAll('.word').forEach(el => el.className = 'word');
+            // 💡 랜덤 요소 반영: 접속할 때마다 시 세트를 무작위로 선택하지만 내부 순서는 원본 고정
+            const randomIndex = Math.floor(Math.random() * poemDatabase.length);
+            selectedPoem = poemDatabase[randomIndex];
+            
+            currentStanzaIndex = 0;
+            totalDistance = 0;
+            timeLeft = 15 * 60; // 1번 조건: 15분 세팅
 
-            // 타이머 작동
+            // 1번 조건: 타이머 구동 로직
             timerInterval = setInterval(() => {
                 timeLeft--;
                 let mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
@@ -118,37 +188,78 @@
                 }
             }, 1000);
 
-            // 음성인식 시작
-            try {
-                recognition.start();
-            } catch (e) {
-                console.log("마이크가 이미 작동 중이거나 오류가 있습니다:", e);
-            }
+            // 첫 번째 연 출력 및 마이크 가동
+            loadStanza();
+            try { recognition.start(); } catch (e) {}
         }
 
+        // 화면에 특정 연(Stanza) 배치하는 함수
+        function loadStanza() {
+            currentWordIndex = 0;
+            const container = document.getElementById("text-container");
+            container.innerHTML = ""; // 기존 화면 지우기 (사라짐 효과)
+
+            // 4번 조건: 2번째 연부터 왼쪽 상단에 순서 교체 알림 표시
+            const turnNotice = document.getElementById("turn-notice");
+            if (currentStanzaIndex > 0) {
+                turnNotice.style.visibility = "visible";
+            } else {
+                turnNotice.style.visibility = "hidden";
+            }
+
+            // 현재 연의 원본 텍스트 가져와서 공백 단위로 쪼개기
+            const stanzaText = selectedPoem.stanzas[currentStanzaIndex];
+            wordsInStanza = stanzaText.split(/(\s+)/).filter(x => x.trim().length > 0);
+
+            // 줄바꿈 기호(\n)가 포함된 단어를 보존하여 span 생성
+            wordsInStanza.forEach((word, index) => {
+                const span = document.createElement("span");
+                span.className = "word";
+                span.id = "word-" + index;
+                
+                // 단어 내부에 줄바꿈 문자가 있다면 처리
+                if (word.includes("\n")) {
+                    span.innerText = word;
+                } else {
+                    span.innerText = word + " ";
+                }
+                container.appendChild(span);
+            });
+        }
+
+        // 단어 통과 시 하이라이트 및 거리 계산
         function highlightWord(index) {
-            if (index < words.length) {
+            if (index < wordsInStanza.length) {
                 const el = document.getElementById("word-" + index);
-                el.classList.add("highlight");
-                // 공백 제외 글자 수 누적 계산
-                totalCharacters += words[index].length; 
+                if (el) {
+                    el.classList.add("highlight");
+                    
+                    // 2번 조건: 1글자 당 10m 전진 (공백과 문장부호를 제외한 순수 글자수 추출)
+                    const cleanWord = wordsInStanza[index].replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()\n\s]/g,"");
+                    totalDistance += (cleanWord.length * 10); 
+                }
             }
         }
 
+        // 4번 조건: 한 연을 다 읽었을 때 다음 연으로 넘어가거나 게임 종료
+        function nextStanza() {
+            currentStanzaIndex++;
+            if (currentStanzaIndex < selectedPoem.stanzas.length) {
+                loadStanza(); // 다음 연 장착
+            } else {
+                endGame(); // 모든 연을 다 읽었으면 완주 종료
+            }
+        }
+
+        // 게임 종료 처리
         function endGame() {
-            isGameRunning = false; // 게임 상태 종료
+            isGameRunning = false;
             clearInterval(timerInterval);
             try { recognition.stop(); } catch(e) {}
             
             document.getElementById("timer").innerText = "게임 종료!";
+            document.getElementById("turn-notice").style.visibility = "hidden";
             document.getElementById("start-btn").style.display = "inline-block";
             document.getElementById("start-btn").innerText = "다시 도전하기";
             
-            // 결과 화면 표시 (글자 수를 거리로 환산)
-            const resultBox = document.getElementById("result-box");
-            resultBox.style.display = "inline-block";
-            resultBox.innerHTML = `🏁 최종 달린 거리: ${totalCharacters} m (${totalCharacters} 글자 통과!)`;
-        }
-    </script>
-</body>
-</html>
+            // 결과 창 활성화 및 거리 노출
