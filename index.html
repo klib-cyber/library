@@ -4,904 +4,437 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>우리 반 AI 리딩런</title>
-
+<title>리딩런 | 학생용</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  width: 100%;
-  background: #2f7bf2;
-  overflow-x: hidden;
-}
-
-body {
-  font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-  color: white;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px 14px;
-}
-
-.game-wrapper {
-  width: 100%;
-  max-width: 900px;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.main-title {
-  font-size: clamp(42px, 7vw, 65px);
-  font-weight: 900;
-  margin: 0;
-  text-shadow: 3px 4px #1a52b8;
-}
-
-.eng-title {
-  font-size: 27px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  margin: 5px 0 12px;
-}
-
-.subtitle {
-  display: inline-block;
-  background: #245fc1;
-  color: #ffeb3b;
-  border-radius: 30px;
-  padding: 10px 22px;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.dashboard {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 20px 0 12px;
-}
-
-#turn-notice {
-  background: white;
-  color: #ef694c;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-#timer {
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.track-container {
-  position: relative;
-  width: 100%;
-  height: 155px;
-  background: #ff7e54;
-  border-top: 7px solid #4ade80;
-  border-bottom: 7px solid #1a52b8;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 7px 18px #174aa0;
-}
-
-.track-lane {
-  position: absolute;
-  width: 100%;
-  top: 50%;
-  border-top: 3px dashed #ffffff99;
-}
-
-.runner-group {
-  position: absolute;
-  left: 4%;
-  top: 40px;
-  display: flex;
-  gap: 14px;
-  transition: left .5s ease;
-}
-
-.book-character {
-  width: 48px;
-  height: 62px;
-  border-radius: 7px;
-  border-left: 6px solid #0003;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 25px;
-  box-shadow: 3px 4px 5px #0003;
-}
-
-.char-red { background: #ef4444; }
-.char-yellow { background: #facc15; }
-.char-green { background: #4ade80; }
-
-.running .book-character {
-  animation: bounce .32s infinite alternate;
-}
-
-.running .char-yellow { animation-delay: .1s; }
-.running .char-green { animation-delay: .2s; }
-
-@keyframes bounce {
-  from { transform: translateY(0) rotate(-4deg); }
-  to { transform: translateY(-13px) rotate(4deg); }
-}
-
-.controls {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 20px 0;
-}
-
-button {
-  border: 0;
-  border-radius: 40px;
-  padding: 13px 24px;
-  font-size: 19px;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 5px 10px #0002;
-}
-
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-#start-btn {
-  background: #4ade80;
-  color: #12492c;
-  border: 3px solid white;
-  font-size: 24px;
-}
-
-#next-btn {
-  background: #ffeb3b;
-  color: #333;
-}
-
-#restart-btn {
-  background: white;
-  color: #2f7bf2;
-}
-
-.settings {
-  background: #ffffff20;
-  padding: 14px;
-  border-radius: 14px;
-  width: 100%;
-  margin-top: 15px;
-}
-
-select {
-  font-size: 18px;
-  padding: 8px;
-  border-radius: 8px;
-  border: 0;
-  margin-left: 8px;
-}
-
-#reading-panel {
-  width: 100%;
-  display: none;
-}
-
-.poem-header {
-  margin-top: 12px;
-  font-size: 21px;
-  font-weight: bold;
-}
-
-#text-container {
-  width: 100%;
-  min-height: 260px;
-  max-height: 48vh;
-  overflow-y: auto;
-  margin: 15px auto;
-  padding: 30px;
-  background: white;
-  color: #333;
-  border-radius: 16px;
-  font-size: clamp(24px, 3.4vw, 34px);
-  line-height: 1.9;
-  text-align: center;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  box-shadow: 0 8px 20px #0002;
-}
-
-/* 이미 읽은 글자만 노란색 */
-.read-done {
-  background: #fff200;
-  color: #222;
-  border-radius: 3px;
-}
-
-#status {
-  font-size: 16px;
-  margin: 10px 0;
-  color: #fff4b5;
-  font-weight: bold;
-}
-
-#result-box {
-  display: none;
-  width: 100%;
-  background: white;
-  color: #2464c8;
-  border-radius: 16px;
-  padding: 28px;
-  margin-top: 20px;
-  font-size: 27px;
-  font-weight: bold;
-}
-
-.footer-banner {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.info-tag {
-  background: white;
-  color: #2f7bf2;
-  padding: 8px 14px;
-  border-radius: 25px;
-  font-size: 13px;
-  font-weight: bold;
-}
-
-@media (max-width: 600px) {
-  .dashboard { justify-content: center; }
-  .track-container { height: 130px; }
-  .runner-group {
-    transform: scale(.75);
-    transform-origin: left center;
-  }
-  #text-container { padding: 20px 14px; }
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic",sans-serif;background:#eaf3ff;color:#17365f}
+header{background:#2f7bf2;color:white;padding:22px;text-align:center}
+h1{margin:0;font-size:38px}
+header p{margin:8px 0 0}
+main{max-width:1000px;margin:auto;padding:20px}
+.card{background:white;border-radius:20px;padding:22px;margin-bottom:16px;box-shadow:0 5px 18px #174b8b16}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+select,button{font:inherit;padding:12px 17px;border-radius:12px}
+select{border:2px solid #bad5ff;background:white}
+button{border:0;background:#2f7bf2;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#627fa7}
+button.orange{background:#f29b37}
+.big{font-size:29px;font-weight:bold}
+#timer{color:#e36c25}
+#sentence{font-size:32px;line-height:1.9;min-height:145px;word-break:keep-all}
+.done{background:#ffe45c;border-radius:4px}
+#status{color:#466789;font-weight:bold}
+.track{height:18px;background:#e6efff;border-radius:20px;overflow:hidden}
+.bar{height:100%;background:#2f7bf2;width:0%;transition:width .4s}
+.team{margin:15px 0}
+.teamhead{display:flex;justify-content:space-between;margin-bottom:7px;font-weight:bold}
+small{color:#667d98}
+#message{color:#c0392b;font-weight:bold}
+@media(max-width:600px){h1{font-size:30px}#sentence{font-size:25px}.big{font-size:24px}}
 </style>
 </head>
-
 <body>
-<div class="game-wrapper">
-
-  <header>
-    <h1 class="main-title">리딩런</h1>
-    <div class="eng-title">READING RUN</div>
-    <div class="subtitle">
-      우리 반 릴레이 낭독 챌린지 🏃
-    </div>
-  </header>
-
-  <div class="dashboard">
-    <div id="turn-notice">
-      📢 게임을 시작해 주세요!
-    </div>
-    <div id="timer">제한시간 15:00</div>
-  </div>
-
-  <div class="track-container">
-    <div class="track-lane"></div>
-    <div class="runner-group" id="runners">
-      <div class="book-character char-red">😆</div>
-      <div class="book-character char-yellow">😀</div>
-      <div class="book-character char-green">😊</div>
-    </div>
-  </div>
-
-  <div class="settings" id="settings">
-    <label for="team-size">참가 학생 수</label>
-    <select id="team-size">
-      <option value="1">1명</option>
-      <option value="2">2명</option>
-      <option value="3">3명</option>
-      <option value="4">4명</option>
-      <option value="5">5명</option>
-      <option value="6">6명</option>
-      <option value="7">7명</option>
-      <option value="8">8명</option>
-      <option value="9" selected>9명</option>
-    </select>
-  </div>
-
-  <div class="controls">
-    <button id="start-btn">🏁 게임 시작!</button>
-    <button id="next-btn" hidden>
-      ➡️ 이 연 완료 · 다음 차례
-    </button>
-    <button id="restart-btn" hidden>
-      🔄 새 게임
-    </button>
-  </div>
-
-  <div id="reading-panel">
-    <div class="poem-header" id="poem-header"></div>
-    <div id="text-container"></div>
-    <div id="status" aria-live="polite"></div>
-  </div>
-
-  <div id="result-box"></div>
-
-  <div class="footer-banner">
-    <div class="info-tag">
-      2026 제10회 연가 책잔치
-    </div>
-    <div class="info-tag">
-      도서실 · 연수실
-    </div>
-  </div>
-
+<header>
+<h1>📚 READING RUN 🏃</h1>
+<p>책을 읽고 함께 달려요!</p>
+</header>
+<main>
+<section class="card">
+<div class="row">
+<div>
+<strong id="roomName">도서실</strong> ·
+<strong id="teamName">컴퓨터 1</strong>
 </div>
+<div class="big" id="timer">15:00</div>
+</div>
+<p id="status">교사의 시작을 기다리고 있어요.</p>
+</section>
+
+<section class="card">
+<div class="row">
+<div>
+<label for="poemSelect">읽을 글 선택</label>
+<select id="poemSelect"></select>
+</div>
+<div>문장 <strong id="progress">1 / 1</strong></div>
+</div>
+<div id="sentence"></div>
+<div class="row">
+<button id="micButton" disabled>🎤 낭독 시작</button>
+<button id="nextButton" class="orange" disabled>다음 문장 →</button>
+<button id="restartButton" class="secondary">글 처음부터</button>
+</div>
+<p><small>읽은 부분은 노란색으로 표시돼요. 문장을 다 읽으면 자동으로 넘어갑니다.</small></p>
+<p id="message"></p>
+</section>
+
+<section class="card">
+<div class="row">
+<div>내가 인식한 글자 수</div>
+<div class="big"><span id="myChars">0</span>자</div>
+</div>
+<h3>🏃 실시간 달리기</h3>
+<div id="teams"></div>
+<p><small>인식한 글자 1자 = 10m · 점수는 교사가 경기를 시작한 뒤 기록됩니다.</small></p>
+</section>
+</main>
 
 <script>
 "use strict";
 
-const $ = id => document.getElementById(id);
-
-const startBtn = $("start-btn");
-const nextBtn = $("next-btn");
-const restartBtn = $("restart-btn");
-const readingPanel = $("reading-panel");
-const textContainer = $("text-container");
-const poemHeader = $("poem-header");
-const statusBox = $("status");
-const resultBox = $("result-box");
-const turnNotice = $("turn-notice");
-const timerBox = $("timer");
-const runners = $("runners");
-const teamSize = $("team-size");
+/* 아래 두 줄만 본인의 Supabase 값으로 교체 */
+const SUPABASE_URL = "여기에_API_URL";
+const SUPABASE_KEY = "여기에_PUBLISHABLE_KEY";
 
 /*
-  기능 확인용 연습 글입니다.
-  실제 행사 시에는 사용 권한이 있는
-  시의 제목과 본문으로 교체하세요.
-*/
-const poems = [
+ * 행사에서 사용할 수 있도록 허락받은 글을 여기에 추가하세요.
+ * 각 글은 줄바꿈이나 마침표·물음표·느낌표를 기준으로 나뉩니다.
+ */
+const READINGS = [
   {
     title: "연습 글 1",
-    text: "책을 펼치면 새로운 세상이 열려요.\n우리 함께 소리 내어 읽어요."
+    text: "파란 하늘 아래 책을 펼쳐요.\n우리 모두 즐겁게 읽어요.\n한 글자씩 힘차게 달려요."
   },
   {
     title: "연습 글 2",
-    text: "따뜻한 말 한마디가 친구의 마음을 환하게 밝혀요."
-  },
-  {
-    title: "연습 글 3",
-    text: "오늘도 한 걸음씩 즐겁게 달려요.\n책 속에서 멋진 이야기를 만나요."
+    text: "작은 마음이 모여 큰 힘이 돼요.\n친구의 이야기를 귀 기울여 들어요.\n오늘도 함께 책 속으로 떠나요."
   }
 ];
 
-const SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
+const params = new URLSearchParams(location.search);
+const room = params.get("room") === "training_room"
+  ? "training_room" : "library";
+const teamParam = Number(params.get("team"));
+const team = [1,2,3].includes(teamParam) ? teamParam : 1;
 
+const $ = id => document.getElementById(id);
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let game = null;
+let sentences = [];
+let sentenceIndex = 0;
+let confirmed = "";
+let interim = "";
 let recognition = null;
-let recognitionActive = false;
-let gameStarted = false;
-let gameFinished = false;
+let listening = false;
+let requestedListening = false;
+let ownChars = 0;
+let busyAdvance = false;
+let scoreQueue = [];
+let sendingScore = false;
+let currentEpoch = 0;
+let activeRecognitionEpoch = 0;
 
-let remainingSeconds = 900;
-let timerInterval = null;
+$("roomName").textContent = room === "library" ? "📚 도서실" : "📚 연수실";
+$("teamName").textContent = "컴퓨터 " + team;
 
-let currentPoemIndex = 0;
-let currentStudent = 1;
-let studentCount = 9;
-
-let totalCharacters = 0;
-let currentText = "";
-
-let finalizedTranscript = "";
-let interimTranscript = "";
-let recognizedText = "";
-
-let recognitionGeneration = 0;
-let microphoneBlocked = false;
-
-function normalizeText(text) {
-  return String(text || "")
-    .replace(/[^가-힣a-zA-Z0-9]/g, "")
-    .toLowerCase();
+function normalize(s) {
+  return (s || "").replace(/[^가-힣a-zA-Z0-9]/g, "").toLowerCase();
 }
-
-function updateTimer() {
-  const minutes = Math.floor(remainingSeconds / 60);
-  const seconds = remainingSeconds % 60;
-
-  timerBox.textContent =
-    "제한시간 " +
-    String(minutes).padStart(2, "0") +
-    ":" +
-    String(seconds).padStart(2, "0");
+function charCount(s) {
+  return normalize(s).length;
 }
-
-function setStatus(message) {
-  statusBox.textContent = message;
-}
-
-/*
-  읽은 부분을 노란색으로 표시합니다.
-
-  음성인식 결과의 글자 수를 사용합니다.
-  정확한 단어 일치 여부를 판정하는
-  방식은 아닙니다.
-*/
-function renderText() {
-  textContainer.replaceChildren();
-
-  const characters = Array.from(currentText);
-  const spokenCount =
-    normalizeText(recognizedText).length;
-
-  const totalReadable = characters.filter(
-    char => /[가-힣a-zA-Z0-9]/.test(char)
-  ).length;
-
-  const readCount = Math.min(
-    spokenCount,
-    totalReadable
+function escapeHTML(s) {
+  return s.replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])
   );
-
-  let position = 0;
-  const fragment = document.createDocumentFragment();
-
-  characters.forEach(char => {
-    const span = document.createElement("span");
-    span.textContent = char;
-
-    const readable =
-      /[가-힣a-zA-Z0-9]/.test(char);
-
-    if (readable) {
-      position++;
-    }
-
-    if (readCount > 0 && position <= readCount) {
-      span.className = "read-done";
-    }
-
-    fragment.appendChild(span);
-  });
-
-  textContainer.appendChild(fragment);
 }
-
-function updateRunner() {
-  const maxCharacters = 1200;
-
-  const progress = Math.min(
-    totalCharacters / maxCharacters,
-    1
-  );
-
-  runners.style.left =
-    (4 + progress * 72) + "%";
-
-  if (gameStarted && !gameFinished) {
-    runners.classList.add("running");
-  } else {
-    runners.classList.remove("running");
+function splitSentences(text) {
+  return (text.match(/[^.!?\n]+[.!?]?/g) || [])
+    .map(s => s.trim()).filter(Boolean);
+}
+function gameSeconds() {
+  if (!game) return 900;
+  if (game.is_playing && game.ends_at) {
+    return Math.max(0, Math.ceil(
+      (new Date(game.ends_at).getTime() - Date.now()) / 1000
+    ));
   }
+  return Math.max(0, game.time_left || 0);
 }
-
-function showCurrentPoem() {
-  const poem =
-    poems[currentPoemIndex % poems.length];
-
-  currentText = poem.text;
-
-  finalizedTranscript = "";
-  interimTranscript = "";
-  recognizedText = "";
-
-  poemHeader.textContent =
-    "📖 " + poem.title;
-
-  turnNotice.textContent =
-    "📢 " + currentStudent +
-    "번 학생 낭독 차례!";
-
-  renderText();
-
-  setStatus("🎤 마이크를 준비하고 있습니다.");
+function canPlay() {
+  return !!game && game.is_playing && gameSeconds() > 0;
 }
-
-function stopRecognition() {
-  recognitionGeneration++;
-  recognitionActive = false;
-
-  if (recognition) {
-    const oldRecognition = recognition;
-    recognition = null;
-
-    try {
-      oldRecognition.abort();
-    } catch (error) {
-      console.warn(error);
+function setMessage(msg) {
+  $("message").textContent = msg || "";
+}
+function loadReading() {
+  sentences = splitSentences(READINGS[Number($("poemSelect").value)].text);
+  sentenceIndex = 0;
+  confirmed = "";
+  interim = "";
+  renderSentence();
+}
+function renderSentence() {
+  const target = sentences[sentenceIndex] || "";
+  const heard = normalize(confirmed + interim);
+  let highlighted = 0;
+  let k = 0;
+  for (const ch of target) {
+    if (normalize(ch)) {
+      if (k >= heard.length) break;
+      k++;
     }
+    highlighted++;
   }
+  $("sentence").innerHTML =
+    '<span class="done">' + escapeHTML(target.slice(0, highlighted)) +
+    '</span>' + escapeHTML(target.slice(highlighted));
+  $("progress").textContent =
+    (sentenceIndex + 1) + " / " + sentences.length;
 }
-
-function startRecognition() {
-  if (!SpeechRecognition) {
-    setStatus(
-      "⚠️ 음성인식을 지원하지 않습니다. Chrome에서 열어 주세요."
-    );
-    return;
+function renderTeams() {
+  if (!game) return;
+  const scores = [game.team1_chars,game.team2_chars,game.team3_chars];
+  const max = Math.max(1, ...scores);
+  $("teams").innerHTML = scores.map((v,i) => `
+    <div class="team">
+      <div class="teamhead">
+        <span>${i+1 === team ? "📖 " : "🏃 "}컴퓨터 ${i+1}</span>
+        <span>${v || 0}자 · ${(v || 0)*10}m</span>
+      </div>
+      <div class="track"><div class="bar"
+        style="width:${Math.max(0,(v || 0)/max*100)}%"></div></div>
+    </div>
+  `).join("");
+}
+function renderGame() {
+  if (!game) return;
+  const s = gameSeconds();
+  $("timer").textContent =
+    String(Math.floor(s/60)).padStart(2,"0") + ":" +
+    String(s%60).padStart(2,"0");
+  $("status").textContent = canPlay()
+    ? "🟢 경기가 진행 중입니다!"
+    : s === 0 ? "🏁 경기가 종료되었습니다."
+    : "⏸ 교사의 시작 또는 재개를 기다리고 있어요.";
+  $("micButton").disabled = !canPlay();
+  $("nextButton").disabled = !canPlay();
+  if (!canPlay() && requestedListening) stopListening();
+  renderTeams();
+}
+function applyGame(row) {
+  if (!row || row.id !== room) return;
+  const wasPlaying = canPlay();
+  const resetDetected = game &&
+    row.time_left === 900 && !row.is_playing &&
+    row.team1_chars === 0 && row.team2_chars === 0 &&
+    row.team3_chars === 0 &&
+    (game.team1_chars || game.team2_chars || game.team3_chars ||
+     game.time_left !== 900);
+  game = row;
+  if (resetDetected) {
+    stopListening();
+    scoreQueue = [];
+    ownChars = 0;
+    $("myChars").textContent = "0";
+    loadReading();
   }
-
-  if (!gameStarted || gameFinished) return;
-  if (microphoneBlocked) return;
-
-  stopRecognition();
-
-  const generation = recognitionGeneration;
-  const instance = new SpeechRecognition();
-
-  recognition = instance;
-
-  instance.lang = "ko-KR";
-  instance.continuous = true;
-  instance.interimResults = true;
-  instance.maxAlternatives = 1;
-
-  instance.onstart = () => {
-    if (
-      recognition !== instance ||
-      generation !== recognitionGeneration
-    ) return;
-
-    recognitionActive = true;
-
-    setStatus(
-      "🎤 듣고 있어요! 글을 또박또박 읽어 주세요."
-    );
-  };
-
-  instance.onresult = event => {
-    if (
-      recognition !== instance ||
-      generation !== recognitionGeneration ||
-      !gameStarted ||
-      gameFinished
-    ) return;
-
-    let finalText = "";
-    let temporaryText = "";
-
-    /*
-      Chrome이 반환하는 현재 인식 결과 전체를
-      매번 다시 조합합니다.
-      이렇게 해야 같은 문장이 중복 누적되는
-      문제를 줄일 수 있습니다.
-    */
-    for (let i = 0; i < event.results.length; i++) {
-      const result = event.results[i];
-      const transcript =
-        result[0].transcript || "";
-
-      if (result.isFinal) {
-        finalText += transcript + " ";
-      } else {
-        temporaryText += transcript + " ";
-      }
-    }
-
-    finalizedTranscript = finalText;
-    interimTranscript = temporaryText;
-
-    recognizedText =
-      finalizedTranscript + interimTranscript;
-
-    // 음성인식할 때마다 형광펜 갱신
-    renderText();
-
-    setStatus(
-      "🎤 음성인식 중 · 인식된 글자 " +
-      normalizeText(recognizedText).length +
-      "자"
-    );
-  };
-
-  instance.onerror = event => {
-    if (
-      recognition !== instance ||
-      generation !== recognitionGeneration
-    ) return;
-
-    if (
-      event.error === "not-allowed" ||
-      event.error === "service-not-allowed"
-    ) {
-      microphoneBlocked = true;
-
-      setStatus(
-        "⚠️ 마이크 권한이 차단되었습니다. 브라우저에서 마이크를 허용해 주세요."
-      );
-    } else if (event.error === "no-speech") {
-      setStatus(
-        "🎤 목소리가 감지되지 않았어요."
-      );
-    } else {
-      setStatus(
-        "⚠️ 음성인식 오류: " + event.error
-      );
-    }
-  };
-
-  instance.onend = () => {
-    if (
-      recognition !== instance ||
-      generation !== recognitionGeneration
-    ) return;
-
-    recognitionActive = false;
-
-    if (
-      !gameStarted ||
-      gameFinished ||
-      microphoneBlocked
-    ) return;
-
-    /*
-      인식 세션이 종료되면 기존 결과를 보존하고
-      새 세션을 시작합니다.
-    */
-    const preservedText =
-      finalizedTranscript + interimTranscript;
-
-    setTimeout(() => {
-      if (
-        gameStarted &&
-        !gameFinished &&
-        !microphoneBlocked &&
-        recognition === instance
-      ) {
-        startRecognitionWithPrefix(preservedText);
-      }
-    }, 700);
-  };
-
+  renderGame();
+  if (wasPlaying && !canPlay()) stopListening();
+}
+async function fetchGame() {
+  const {data,error} = await client.from("game_rooms")
+    .select("*").eq("id",room).single();
+  if (error) setMessage("서버 연결 오류: " + error.message);
+  else applyGame(data);
+}
+function queueScore(n) {
+  if (!canPlay() || n <= 0) return;
+  while (n > 0) {
+    const part = Math.min(120,n);
+    scoreQueue.push(part);
+    n -= part;
+  }
+  flushScore();
+}
+async function flushScore() {
+  if (sendingScore) return;
+  sendingScore = true;
   try {
-    instance.start();
-  } catch (error) {
-    console.error(error);
-
-    setStatus(
-      "⚠️ 마이크를 시작하지 못했습니다."
-    );
-  }
-}
-
-/*
-  마이크가 자동 재시작될 때
-  앞서 인식한 내용을 보존합니다.
-*/
-function startRecognitionWithPrefix(prefix) {
-  if (!gameStarted || gameFinished) return;
-
-  const previousPrefix = String(prefix || "");
-
-  startRecognition();
-
-  if (!recognition) return;
-
-  const instance = recognition;
-  const originalOnResult = instance.onresult;
-
-  instance.onresult = event => {
-    if (typeof originalOnResult === "function") {
-      originalOnResult(event);
+    while (scoreQueue.length && canPlay()) {
+      const n = scoreQueue[0];
+      const {error} = await client.rpc("rr_add",{
+        p_room:room,p_team:team,p_chars:n
+      });
+      if (error) {
+        setMessage("점수 전송 오류: " + error.message);
+        break;
+      }
+      scoreQueue.shift();
     }
-
-    if (recognition !== instance) return;
-
-    recognizedText =
-      previousPrefix + " " +
-      finalizedTranscript + " " +
-      interimTranscript;
-
-    renderText();
-
-    setStatus(
-      "🎤 음성인식 중 · 인식된 글자 " +
-      normalizeText(recognizedText).length +
-      "자"
-    );
-  };
-}
-
-function calculateTurnScore() {
-  const recognizedCount =
-    normalizeText(recognizedText).length;
-
-  const poemCount =
-    normalizeText(currentText).length;
-
-  return Math.min(
-    recognizedCount,
-    poemCount
-  );
-}
-
-function completeTurn() {
-  if (!gameStarted || gameFinished) return 0;
-
-  const earned = calculateTurnScore();
-
-  stopRecognition();
-
-  totalCharacters += earned;
-
-  updateRunner();
-
-  return earned;
-}
-
-function nextTurn() {
-  if (!gameStarted || gameFinished) return;
-
-  const earned = completeTurn();
-
-  currentStudent++;
-
-  if (currentStudent > studentCount) {
-    currentStudent = 1;
+  } finally {
+    sendingScore = false;
   }
-
-  currentPoemIndex++;
-
-  showCurrentPoem();
-
-  setStatus(
-    "✅ 이전 차례 +" +
-    (earned * 10) +
-    "m · 다음 학생 준비!"
-  );
-
-  startRecognition();
 }
-
-function finishGame() {
-  if (gameFinished) return;
-
-  if (gameStarted) {
-    completeTurn();
+function scoreFinalized(text) {
+  const n = charCount(text);
+  if (!n) return;
+  ownChars += n;
+  $("myChars").textContent = ownChars;
+  queueScore(n);
+}
+function similarityProgress(target, spoken) {
+  const t = normalize(target);
+  const h = normalize(spoken);
+  if (!t.length || !h.length) return 0;
+  let ti = 0;
+  for (const ch of h) {
+    const found = t.indexOf(ch,ti);
+    if (found >= 0 && found - ti <= 4) ti = found + 1;
   }
-
-  gameStarted = false;
-  gameFinished = true;
-
-  clearInterval(timerInterval);
-  timerInterval = null;
-
-  stopRecognition();
-  updateRunner();
-
-  readingPanel.style.display = "none";
-  nextBtn.hidden = true;
-  restartBtn.hidden = false;
-
-  turnNotice.textContent =
-    "🏁 리딩런 종료!";
-
-  resultBox.style.display = "block";
-
-  resultBox.textContent =
-    "🏆 최종 기록: " +
-    (totalCharacters * 10).toLocaleString() +
-    "m";
+  return ti / t.length;
 }
-
-function startGame() {
-  if (gameStarted) return;
-
-  if (!SpeechRecognition) {
-    alert(
-      "Chrome 브라우저에서 실행해 주세요."
-    );
+function maybeAdvance() {
+  if (busyAdvance || !canPlay()) return;
+  const target = sentences[sentenceIndex];
+  if (!target) return;
+  const heard = confirmed + interim;
+  const ratio = similarityProgress(target,heard);
+  if (ratio >= .94 && charCount(heard) >= charCount(target)*.85) {
+    busyAdvance = true;
+    setTimeout(() => {
+      if (canPlay()) nextSentence();
+      busyAdvance = false;
+    }, 550);
+  }
+}
+function nextSentence() {
+  if (sentenceIndex >= sentences.length-1) {
+    stopListening();
+    setMessage("🎉 이 글을 모두 읽었어요! 다른 글을 선택해 보세요.");
     return;
   }
-
-  gameStarted = true;
-  gameFinished = false;
-  microphoneBlocked = false;
-
-  studentCount =
-    Number(teamSize.value) || 9;
-
-  currentStudent = 1;
-  currentPoemIndex = 0;
-
-  totalCharacters = 0;
-  remainingSeconds = 900;
-
-  startBtn.hidden = true;
-  nextBtn.hidden = false;
-  restartBtn.hidden = true;
-
-  $("settings").style.display = "none";
-  readingPanel.style.display = "block";
-  resultBox.style.display = "none";
-
-  updateTimer();
-  updateRunner();
-  showCurrentPoem();
-  startRecognition();
-
-  clearInterval(timerInterval);
-
-  timerInterval = setInterval(() => {
-    if (!gameStarted || gameFinished) return;
-
-    remainingSeconds--;
-    updateTimer();
-
-    if (remainingSeconds <= 0) {
-      finishGame();
+  const resume = requestedListening;
+  stopRecognitionOnly();
+  sentenceIndex++;
+  confirmed = "";
+  interim = "";
+  renderSentence();
+  if (resume && canPlay()) {
+    requestedListening = true;
+    startRecognition();
+  }
+}
+function stopRecognitionOnly() {
+  activeRecognitionEpoch = ++currentEpoch;
+  if (recognition) {
+    try { recognition.abort(); } catch(e) {}
+    recognition = null;
+  }
+  listening = false;
+}
+function stopListening() {
+  requestedListening = false;
+  stopRecognitionOnly();
+  $("micButton").textContent = "🎤 낭독 시작";
+}
+function startRecognition() {
+  if (!requestedListening || !canPlay() || listening) return;
+  const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechAPI) {
+    setMessage("Chrome 브라우저에서 열어 주세요. 음성 인식을 지원하지 않습니다.");
+    stopListening();
+    return;
+  }
+  const rec = new SpeechAPI();
+  recognition = rec;
+  const epoch = ++currentEpoch;
+  activeRecognitionEpoch = epoch;
+  rec.lang = "ko-KR";
+  rec.continuous = true;
+  rec.interimResults = true;
+  listening = true;
+  let lastFinalIndex = 0;
+  rec.onresult = event => {
+    if (epoch !== activeRecognitionEpoch) return;
+    let temporary = "";
+    for (let i = lastFinalIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      const text = result[0]?.transcript || "";
+      if (result.isFinal) {
+        confirmed += text + " ";
+        scoreFinalized(text);
+        lastFinalIndex = i + 1;
+      } else {
+        temporary += text + " ";
+      }
     }
-  }, 1000);
+    interim = temporary;
+    renderSentence();
+    maybeAdvance();
+  };
+  rec.onerror = event => {
+    if (epoch !== activeRecognitionEpoch) return;
+    if (event.error === "not-allowed" ||
+        event.error === "service-not-allowed") {
+      setMessage("마이크 권한을 허용해 주세요.");
+      stopListening();
+    } else if (event.error !== "no-speech" &&
+               event.error !== "aborted") {
+      setMessage("음성 인식 오류: " + event.error);
+    }
+  };
+  rec.onend = () => {
+    if (epoch !== activeRecognitionEpoch) return;
+    listening = false;
+    recognition = null;
+    if (requestedListening && canPlay()) {
+      setTimeout(() => {
+        if (epoch === activeRecognitionEpoch) startRecognition();
+      }, 450);
+    }
+  };
+  try {
+    rec.start();
+    $("micButton").textContent = "⏹ 낭독 멈추기";
+    setMessage("");
+  } catch(e) {
+    listening = false;
+    setMessage("마이크 시작 실패: " + e.message);
+  }
 }
 
-function resetGame() {
-  clearInterval(timerInterval);
-  timerInterval = null;
+READINGS.forEach((r,i) => {
+  const o = document.createElement("option");
+  o.value = i;
+  o.textContent = r.title;
+  $("poemSelect").appendChild(o);
+});
+$("poemSelect").addEventListener("change",() => {
+  stopListening(); loadReading();
+});
+$("restartButton").onclick = () => {
+  stopListening(); loadReading(); setMessage("");
+};
+$("nextButton").onclick = () => {
+  if (canPlay()) nextSentence();
+};
+$("micButton").onclick = () => {
+  if (requestedListening) stopListening();
+  else {
+    requestedListening = true;
+    startRecognition();
+  }
+};
 
-  stopRecognition();
-
-  gameStarted = false;
-  gameFinished = false;
-  microphoneBlocked = false;
-
-  remainingSeconds = 900;
-  currentStudent = 1;
-  currentPoemIndex = 0;
-  totalCharacters = 0;
-
-  finalizedTranscript = "";
-  interimTranscript = "";
-  recognizedText = "";
-
-  startBtn.hidden = false;
-  nextBtn.hidden = true;
-  restartBtn.hidden = true;
-
-  $("settings").style.display = "block";
-  readingPanel.style.display = "none";
-  resultBox.style.display = "none";
-
-  turnNotice.textContent =
-    "📢 게임을 시작해 주세요!";
-
-  updateTimer();
-  updateRunner();
+loadReading();
+if (SUPABASE_URL.includes("여기에_") ||
+    SUPABASE_KEY.includes("여기에_")) {
+  setMessage("코드 상단에 Supabase API URL과 Publishable key를 입력하세요.");
+} else {
+  fetchGame();
+  client.channel("student-" + room + "-" + team + "-" + Math.random())
+    .on("postgres_changes",{
+      event:"UPDATE",schema:"public",table:"game_rooms",
+      filter:"id=eq." + room
+    }, payload => applyGame(payload.new))
+    .subscribe();
+  setInterval(fetchGame,5000);
+  setInterval(renderGame,500);
 }
-
-startBtn.addEventListener("click", startGame);
-nextBtn.addEventListener("click", nextTurn);
-restartBtn.addEventListener("click", resetGame);
-
-updateTimer();
-updateRunner();
-
 </script>
 </body>
 </html>
