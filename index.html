@@ -121,7 +121,7 @@ let wordsArray = [];
 let currentWordIndex = 0;
 let totalReadChars = 0;
 
-let timeLeft = 900; // 15분 (초)
+let timeLeft = 900; 
 let timerInterval = null;
 let recognition = null;
 
@@ -153,9 +153,9 @@ if (SpeechRecognition) {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
-                matchSpokenText(event.results[i][0].transcript);
+                matchSpokenText(event.results[i].transcript);
             } else {
-                interimTranscript += event.results[i][0].transcript;
+                interimTranscript += event.results[i].transcript;
             }
         }
         statusDiv.innerText = "🎤 인식 중: " + interimTranscript;
@@ -169,9 +169,8 @@ if (SpeechRecognition) {
     };
 
     recognition.onend = function() {
-        // 게임 진행 중일 때 꺼지면 자동 재시작
-        if (readingDiv.style.display === 'block') {
-            recognition.start();
+        if (window.getComputedStyle(readingDiv).display === 'block') {
+            try { recognition.start(); } catch(e) {}
         }
     };
 } else {
@@ -187,7 +186,6 @@ startBtn.addEventListener('click', () => {
     totalReadChars = 0;
     timeLeft = 900;
 
-    settingsDiv.style.hidden = true;
     settingsDiv.style.display = 'none';
     startBtn.style.display = 'none';
     nextBtn.style.display = 'inline-block';
@@ -237,8 +235,6 @@ function loadStanza() {
     poemTitleDiv.innerText = poem.title;
     
     const stanzaText = poem.stanzas[currentStanzaIndex];
-    
-    // 공백 및 문장 부호를 기준으로 단어 분리
     const rawWords = stanzaText.split(/(\s+)/);
     textDiv.innerHTML = '';
     wordsArray = [];
@@ -250,7 +246,6 @@ function loadStanza() {
         } else {
             const span = document.createElement('span');
             span.className = 'word';
-            // 순수 비교를 위한 한글/영문 추출 텍스트 저장
             span.dataset.clean = word.replace(/[^가-힣a-zA-Z0-9]/g, '');
             span.innerText = word;
             textDiv.appendChild(span);
@@ -262,10 +257,14 @@ function loadStanza() {
         wordsArray[0].classList.add('current');
     }
     
-    // 주자 위치 업데이트 트랙 이동 (0% ~ 80% 구간)
     let progress = ((currentStudent - 1) / totalStudents) * 80;
     runners.style.left = `${10 + progress}%`;
 }
 
 // 음성 텍스트 매칭 및 실시간 형광펜 처리 로직
 function matchSpokenText(spoken) {
+    const cleanSpoken = spoken.replace(/[^가-힣a-zA-Z0-9]/g, '');
+    if (!cleanSpoken) return;
+
+    let tempIndex = currentWordIndex;
+    
