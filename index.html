@@ -333,5 +333,455 @@ select {
 <script>
 "use strict";
 
+/* ===== 리딩런 게임 실행 코드 ===== */
+
+const $ = id => document.getElementById(id);
+
+const startBtn = $("start-btn");
+const nextBtn = $("next-btn");
+const restartBtn = $("restart-btn");
+const readingPanel = $("reading-panel");
+const textContainer = $("text-container");
+const poemHeader = $("poem-header");
+const statusBox = $("status");
+const resultBox = $("result-box");
+const turnNotice = $("turn-notice");
+const timerBox = $("timer");
+const runners = $("runners");
+const teamSize = $("team-size");
+
+/*
+ * 아래 poems 배열에 사용할 시를 추가하세요.
+ * 각 항목의 title은 제목, text는 낭독할 본문입니다.
+ * 지금은 기능 확인용 예시 문장 3개가 들어 있습니다.
+ */
+const poems = [
+  {
+    title: "연습 글 1",
+    text: "책을 펼치면 새로운 세상이 열려요.\n우리 함께 소리 내어 읽어요."
+  },
+  {
+    title: "연습 글 2",
+    text: "따뜻한 말 한마디가 친구의 마음을 환하게 밝혀요."
+  },
+  {
+    title: "연습 글 3",
+    text: "오늘도 한 걸음씩 즐겁게 달려요.\n책 속에서 멋진 이야기를 만나요."
+  }
+];
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+let recognition = null;
+let listening = false;
+let gameStarted = false;
+let gameFinished = false;
+let remainingSeconds = 900;
+let timerInterval = null;
+
+let currentPoemIndex = 0;
+let currentStudent = 1;
+let studentCount = 9;
+let totalCharacters = 0;
+let recognizedText = "";
+let finalizedTranscript = "";
+let currentText = "";
+let lastRecognitionError = "";
+
+function countCharacters(text) {
+  return Array.from(
+    (text || "").replace(/\s/g, "")
+  ).length;
+}
+
+function normalizeText(text) {
+  return (text || "")
+    .replace(/[^가-힣a-zA-Z0-9]/g, "")
+    .toLowerCase();
+}
+
+function updateTimer() {
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+
+  timerBox.textContent =
+    "제한시간 " +
+    String(minutes).padStart(2, "0") +
+    ":" +
+    String(seconds).padStart(2, "0");
+}
+
+function updateRunner() {
+  const maxCharacters = 1200;
+  const progress = Math.min(
+    totalCharacters / maxCharacters,
+    1
+  );
+
+  runners.style.left =
+    (4 + progress * 72) + "%";
+
+  if (gameStarted && !gameFinished) {
+    runners.classList.add("running");
+  } else {
+    runners.classList.remove("running");
+  }
+}
+
+function setStatus(message) {
+  statusBox.textContent = message;
+}
+
+function renderText() {
+  textContainer.textContent = currentText;
+}
+
+function showCurrentPoem() {
+  if (!poems.length) {
+    setStatus("등록된 낭독 글이 없습니다.");
+    return;
+  }
+
+  const poem = poems[currentPoemIndex % poems.length];
+
+  currentText = poem.text;
+  recognizedText = "";
+  finalizedTranscript = "";
+
+  poemHeader.textContent =
+    "📖 " + poem.title;
+
+  renderText();
+
+  turnNotice.textContent =
+    "📢 " + currentStudent +
+    "번 학생 낭독 차례!";
+
+  setStatus("🎤 마이크를 준비하고 있습니다.");
+}
+
+function stopRecognition() {
+  listening = false;
+
+  if (recognition) {
+    try {
+      recognition.abort();
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+}
+
+function startRecognition() {
+  if (!SpeechRecognition) {
+    setStatus(
+      "⚠️ 이 브라우저는 음성인식을 지원하지 않습니다. Chrome에서 열어 주세요."
+    );
+    return;
+  }
+
+  stopRecognition();
+
+  const instance = new SpeechRecognition();
+  recognition = instance;
+
+  instance.lang = "ko-KR";
+  instance.continuous = true;
+  instance.interimResults = true;
+  instance.maxAlternatives = 1;
+
+  lastRecognitionError = "";
+
+  instance.onstart = () => {
+    if (recognition !== instance) return;
+
+    listening = true;
+    setStatus("🎤 듣고 있어요! 글을 또박또박 읽어 주세요.");
+  };
+
+  instance.onresult = event => {
+    if (
+      recognition !== instance ||
+      !gameStarted ||
+      gameFinished
+    ) return;
+
+    let interim = "";
+
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ) {
+      const transcript =
+        event.results[i][0].transcript || "";
+
+      if (event.results[i].isFinal) {
+        finalizedTranscript += transcript + " ";
+      } else {
+        interim += transcript;
+      }
+    }
+
+    recognizedText = finalizedTranscript + interim;
+
+    setStatus(
+      "🎤 음성인식 중 · 인식된 글자 " +
+      countCharacters(recognizedText) + "자"
+    );
+  };
+
+  instance.onerror = event => {
+    if (recognition !== instance) return;
+
+    lastRecognitionError = event.error || "";
+
+    if (
+      event.error === "not-allowed" ||
+      event.error === "service-not-allowed"
+    ) {
+      setStatus(
+        "⚠️ 마이크 권한이 차단되었습니다. 주소창 옆에서 마이크를 허용해 주세요."
+      );
+    } else if (event.error === "no-speech") {
+      setStatus(
+        "🎤 목소리가 감지되지 않았어요. 다시 읽어 주세요."
+      );
+    } else {
+      setStatus(
+        "⚠️ 음성인식 오류: " + event.error
+      );
+    }
+  };
+
+  instance.onend = () => {
+    if (recognition !== instance) return;
+
+    listening = false;
+
+    if (
+      gameStarted &&
+      !gameFinished &&
+      lastRecognitionError !== "not-allowed" &&
+      lastRecognitionError !== "service-not-allowed"
+    ) {
+      setStatus(
+        "🎤 음성인식이 멈췄어요. 다시 연결합니다."
+      );
+
+      setTimeout(() => {
+        if (
+          gameStarted &&
+          !gameFinished &&
+          recognition === instance
+        ) {
+          startRecognition();
+        }
+      }, 700);
+    }
+  };
+
+  try {
+    instance.start();
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      "⚠️ 마이크를 시작하지 못했습니다. Chrome의 마이크 권한을 확인해 주세요."
+    );
+  }
+}
+
+function calculateTurnScore() {
+  const target = normalizeText(currentText);
+  const spoken = normalizeText(recognizedText);
+
+  if (!target || !spoken) return 0;
+
+  /*
+   * 낭독 글과 인식 결과에 공통으로 등장하는
+   * 글자 수를 기준으로 간단하게 점수를 계산합니다.
+   * 정확한 낭독 평가 알고리즘은 아닙니다.
+   */
+  const available = new Map();
+
+  for (const char of target) {
+    available.set(
+      char,
+      (available.get(char) || 0) + 1
+    );
+  }
+
+  let matched = 0;
+
+  for (const char of spoken) {
+    const left = available.get(char) || 0;
+
+    if (left > 0) {
+      matched++;
+      available.set(char, left - 1);
+    }
+  }
+
+  return matched;
+}
+
+function completeTurn() {
+  if (!gameStarted || gameFinished) return;
+
+  stopRecognition();
+
+  const earned = calculateTurnScore();
+  totalCharacters += earned;
+
+  updateRunner();
+
+  return earned;
+}
+
+function nextTurn() {
+  if (!gameStarted || gameFinished) return;
+
+  const earned = completeTurn();
+
+  currentStudent++;
+
+  if (currentStudent > studentCount) {
+    currentStudent = 1;
+  }
+
+  currentPoemIndex++;
+
+  showCurrentPoem();
+
+  setStatus(
+    "✅ 이전 차례 +" +
+    (earned * 10) +
+    "m · 다음 학생 준비!"
+  );
+
+  startRecognition();
+}
+
+function finishGame() {
+  if (gameFinished) return;
+
+  if (gameStarted) {
+    completeTurn();
+  }
+
+  gameStarted = false;
+  gameFinished = true;
+
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  stopRecognition();
+  updateRunner();
+
+  readingPanel.style.display = "none";
+  nextBtn.hidden = true;
+  restartBtn.hidden = false;
+
+  turnNotice.textContent =
+    "🏁 리딩런 종료!";
+
+  resultBox.style.display = "block";
+  resultBox.textContent =
+    "🏆 최종 기록: " +
+    (totalCharacters * 10).toLocaleString() +
+    "m";
+}
+
+function startGame() {
+  if (gameStarted) return;
+
+  if (!SpeechRecognition) {
+    alert(
+      "이 브라우저에서는 음성인식이 지원되지 않습니다. Chrome을 사용해 주세요."
+    );
+    return;
+  }
+
+  gameStarted = true;
+  gameFinished = false;
+
+  studentCount = Number(teamSize.value) || 9;
+  currentStudent = 1;
+  currentPoemIndex = 0;
+  totalCharacters = 0;
+  remainingSeconds = 900;
+
+  startBtn.hidden = true;
+  nextBtn.hidden = false;
+  restartBtn.hidden = true;
+
+  $("settings").style.display = "none";
+  readingPanel.style.display = "block";
+  resultBox.style.display = "none";
+
+  updateTimer();
+  updateRunner();
+  showCurrentPoem();
+
+  startRecognition();
+
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    if (!gameStarted || gameFinished) return;
+
+    remainingSeconds--;
+    updateTimer();
+
+    if (remainingSeconds <= 0) {
+      finishGame();
+    }
+  }, 1000);
+}
+
+function resetGame() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  stopRecognition();
+
+  gameStarted = false;
+  gameFinished = false;
+
+  remainingSeconds = 900;
+  currentStudent = 1;
+  currentPoemIndex = 0;
+  totalCharacters = 0;
+  recognizedText = "";
+  finalizedTranscript = "";
+
+  startBtn.hidden = false;
+  nextBtn.hidden = true;
+  restartBtn.hidden = true;
+
+  $("settings").style.display = "block";
+  readingPanel.style.display = "none";
+  resultBox.style.display = "none";
+
+  turnNotice.textContent =
+    "📢 게임을 시작해 주세요!";
+
+  updateTimer();
+  updateRunner();
+}
+
+startBtn.addEventListener("click", startGame);
+nextBtn.addEventListener("click", nextTurn);
+restartBtn.addEventListener("click", resetGame);
+
+updateTimer();
+updateRunner();
+
+</script>
+</body>
+</html>
+
 
 
