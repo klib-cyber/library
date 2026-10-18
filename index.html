@@ -16,7 +16,7 @@
         #timer { font-size: 30px; font-weight: 900; }
         .track { position: relative; height: 145px; border-radius: 15px; background: #ff8055; border-top: 7px solid #4ade80; border-bottom: 7px solid #1a52b8; overflow: hidden; }
         .track:before { content: ""; position: absolute; top: 50%; left: 0; right: 0; border-top: 3px dashed #ffffff99; }
-        #runners { position: absolute; top: 40px; left: 10px; font-size: 42px; transition: left .4s; }
+        #runners { position: absolute; top: 40px; left: 0%; font-size: 42px; transition: left .4s ease; margin-left: 10px; }
         .running #runners { animation: bounce .4s infinite alternate; }
         @keyframes bounce { to { transform: translateY(-12px); } }
         .settings { margin: 18px 0; padding: 14px; background: #ffffff22; border-radius: 12px; }
@@ -24,266 +24,135 @@
         button { border: none; border-radius: 30px; padding: 14px 22px; margin: 5px; font-size: 19px; font-weight: 900; cursor: pointer; }
         #start { background: #4ade80; color: #12492c; font-size: 24px; }
         #next { background: #ffeb3b; color: black; }
-        #reset { background: white; color: #2f7bf2; }
-        #reading { display: none; }
-        #poemTitle { font-size: 22px; font-weight: bold; margin: 18px 0; }
-        #text { background: white; color: #555; border-radius: 16px; padding: 28px 20px; font-size: clamp(24px, 3.5vw, 34px); line-height: 2; min-height: 230px; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
-        .word { color: #777; display: inline-block; margin-right: 6px; padding: 0 4px; }
-        .word.done { background: #fff200; color: black; border-radius: 4px; font-weight: bold; }
-        .word.current { text-decoration: underline; text-decoration-color: #2f7bf2; text-decoration-thickness: 3px; color: #2f7bf2; }
-        #status { margin: 14px; font-size: 17px; color: #fff6ad; font-weight: bold; }
-        #score { margin: 12px; font-size: 20px; font-weight: bold; }
-        #result { display: none; background: white; color: #2464c8; border-radius: 16px; padding: 30px; margin: 20px 0; font-size: 25px; font-weight: bold; }
-        footer { margin-top: 22px; font-weight: bold; }
-        [hidden] { display: none !important; }
+        #reset { background: white; color: #333; }
+        .info-panel { display: flex; justify-content: space-around; background: #ffffff22; border-radius: 12px; padding: 15px; margin-top: 15px; font-size: 18px; }
+        .info-box { flex: 1; padding: 5px; }
+        .info-box span { display: block; font-size: 24px; font-weight: bold; color: #ffeb3b; margin-top: 5px; }
     </style>
 </head>
 <body>
-<div class="wrapper">
-    <h1>리딩런</h1>
-    <div class="english">READING RUN</div>
-    <div class="subtitle">우리 반 릴레이 낭독 챌린지 🏃</div>
-    <div class="dashboard">
-        <div id="notice">📢 게임을 시작해 주세요!</div>
-        <div id="timer">제한시간 15:00</div>
+    <div class="wrapper">
+        <div class="english">2026 YEONGA BOOK FESTIVAL</div>
+        <h1>리딩런 (Reading Run)</h1>
+        <div class="subtitle">📖 독서 목표를 향해 함께 달리는 레이스!</div>
+
+        <!-- 대시보드 (공지사항 및 타이머) -->
+        <div class="dashboard">
+            <div id="notice">📢 현재 목표: 책 1권 읽고 전진하기!</div>
+            <div id="timer">⏱️ 00:00</div>
+        </div>
+
+        <!-- 러닝 트랙 -->
+        <div class="track">
+            <div id="runners">🏃‍♂️💨</div>
+        </div>
+
+        <!-- 설정 및 컨트롤러 -->
+        <div class="settings">
+            <label for="step-select">🏃 이동 거리 선택: </label>
+            <select id="step-select">
+                <option value="10">10% (가볍게 한 걸음)</option>
+                <option value="25">25% (힘찬 전력질주)</option>
+                <option value="50">50% (대단한 몰입!)</option>
+            </select>
+            <br><br>
+            <button id="start">▶️ 레이스 시작</button>
+            <button id="next">👟 앞으로 전진</button>
+            <button id="reset">🔄 처음으로</button>
+        </div>
+
+        <!-- 현재 현황판 -->
+        <div class="info-panel">
+            <div class="info-box">전체 진행률<span id="progress-percent">0%</span></div>
+        </div>
     </div>
-    <div class="track" id="track">
-        <div id="runners">📕 📒 📗</div>
-    </div>
-    <div class="settings" id="settings">
-        참가 학생 수
-        <select id="teamSize">
-            <option value="1">1명</option>
-            <option value="2">2명</option>
-            <option value="3">3명</option>
-            <option value="4">4명</option>
-            <option value="5">5명</option>
-            <option value="6">6명</option>
-            <option value="7">7명</option>
-            <option value="8">8명</option>
-            <option value="9" selected>9명</option>
-        </select>
-    </div>
-    <div>
-        <button id="start">🏁 게임 시작!</button>
-        <button id="next" hidden>➡️ 다음 차례</button>
-        <button id="reset" hidden>🔄 새 게임</button>
-    </div>
-    <div id="reading">
-        <div id="poemTitle"></div>
-        <div id="text"></div>
-        <div id="status">🎤 음성 인식 대기 중...</div>
-        <div id="score">읽은 글자 수: 0자</div>
-    </div>
-    <div id="result"></div>
-    <footer>
-        2026 제10회 연가 책잔치<br>
-        꿈마루 도서실 · 연수실
-    </footer>
-</div>
 
-<script>
-"use strict";
+    <script>
+        const runners = document.getElementById('runners');
+        const startBtn = document.getElementById('start');
+        const nextBtn = document.getElementById('next');
+        const resetBtn = document.getElementById('reset');
+        const stepSelect = document.getElementById('step-select');
+        const progressPercentText = document.getElementById('progress-percent');
+        const timerText = document.getElementById('timer');
 
-const poemDatabase = [
-    {
-        title: "퐁당퐁당",
-        stanzas: [
-            "퐁당퐁당 돌을 던지자. 누나 몰래 돌을 던지자. 냇물아 퍼져라, 널리 멀리 퍼져라. 건너편에 앉아서 나물을 씻는 우리 누나 손등을 간질여 주어라.",
-            "퐁당퐁당 돌을 던지자. 누나 몰래 돌을 던지자. 냇물아 퍼져라, 퍼질 대로 퍼져라. 고운 노래 한마디 들려 달라고 우리 누나 손등을 간질여 주어라."
-        ]
-    },
-    {
-        title: "누가누가 잠자나",
-        stanzas: [
-            "넓고 넓은 밤하늘엔 누가누가 잠자나. 하늘나라 아기별이 깜박깜박 잠자지.",
-            "깊고 깊은 숲 속에선 누가누가 잠자나. 산새 들새 모여앉아 꼬박꼬박 잠자지.",
-            "포근포근 엄마 품엔 누가누가 잠자나. 우리 아기 예쁜 아기 새근새근 잠자지."
-        ]
-    },
-    {
-        title: "밤이슬",
-        stanzas: [
-            "풀잎 위에 작은 달이 하나 떴습니다.",
-            "알처럼 작고 귀여운 달이 하나 떴습니다.",
-            "풀벌레들이 어두워할까 봐",
-            "풀잎 위에 빨간 달이 하나 몰래 몰래 떴습니다."
-        ]
-    }
-];
+        let currentPercent = 0; // % 단위로 직관적 관리
+        let isRunning = false;
+        let timerInterval = null;
+        let seconds = 0;
 
-// 게임 상태 변수들
-let currentStudent = 1;
-let totalStudents = 9;
-let currentPoemIndex = 0;
-let currentStanzaIndex = 0;
-let wordsArray = [];
-let currentWordIndex = 0;
-let totalReadChars = 0;
+        // 타이머 업데이트 함수
+        function updateTimer() {
+            seconds++;
+            const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const secs = String(seconds % 60).padStart(2, '0');
+            timerText.textContent = `⏱️ ${mins}:${secs}`;
+        }
 
-let timeLeft = 900; 
-let timerInterval = null;
-let recognition = null;
-
-// DOM 요소 연결
-const startBtn = document.getElementById('start');
-const nextBtn = document.getElementById('next');
-const resetBtn = document.getElementById('reset');
-const settingsDiv = document.getElementById('settings');
-const readingDiv = document.getElementById('reading');
-const resultDiv = document.getElementById('result');
-const noticeDiv = document.getElementById('notice');
-const timerDiv = document.getElementById('timer');
-const trackDiv = document.getElementById('track');
-const runners = document.getElementById('runners');
-const poemTitleDiv = document.getElementById('poemTitle');
-const textDiv = document.getElementById('text');
-const statusDiv = document.getElementById('status');
-const scoreDiv = document.getElementById('score');
-
-// 음성 인식 설정 수립
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'ko-KR';
-
-    recognition.onresult = function(event) {
-        let interimTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-                matchSpokenText(event.results[i].transcript);
+        // 레이스 시작/일시정지 버튼 이벤트
+        startBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                isRunning = true;
+                document.querySelector('.track').classList.add('running');
+                startBtn.textContent = '⏸️ 레이스 일시정지';
+                startBtn.style.background = '#f43f5e';
+                startBtn.style.color = 'white';
+                timerInterval = setInterval(updateTimer, 1000);
             } else {
-                interimTranscript += event.results[i].transcript;
+                isRunning = false;
+                document.querySelector('.track').classList.remove('running');
+                startBtn.textContent = '▶️ 레이스 재개';
+                startBtn.style.background = '#4ade80';
+                startBtn.style.color = '#12492c';
+                clearInterval(timerInterval);
             }
-        }
-        statusDiv.innerText = "🎤 인식 중: " + interimTranscript;
-    };
+        });
 
-    recognition.onerror = function(event) {
-        console.error("음성 인식 오류:", event.error);
-        if(event.error === 'not-allowed') {
-            statusDiv.innerText = "❌ 마이크 권한을 허용해 주셔야 작동합니다!";
-        }
-    };
+        // 앞으로 전진 버튼 이벤트 (가장 안전한 퍼센트 연산으로 전면 수정)
+        nextBtn.addEventListener('click', () => {
+            const step = parseInt(stepSelect.value);
+            currentPercent += step;
 
-    recognition.onend = function() {
-        if (window.getComputedStyle(readingDiv).display === 'block') {
-            try { recognition.start(); } catch(e) {}
-        }
-    };
-} else {
-    alert("이 브라우저는 음성 인식을 지원하지 않습니다. 크롬(Chrome) 브라우저를 사용해 주세요.");
-}
-
-// [게임 시작] 버튼 이벤트
-startBtn.addEventListener('click', () => {
-    console.log('리딩런: 시작 버튼 클릭 확인');
-
-    try {
-        totalStudents = parseInt(
-            document.getElementById('teamSize').value,
-            10
-        );
-
-        currentStudent = 1;
-        currentPoemIndex = Math.floor(
-            Math.random() * poemDatabase.length
-        );
-        currentStanzaIndex = 0;
-        totalReadChars = 0;
-        timeLeft = 900;
-
-        settingsDiv.style.display = 'none';
-        startBtn.style.display = 'none';
-        nextBtn.style.display = 'inline-block';
-        resetBtn.style.display = 'inline-block';
-        readingDiv.style.display = 'block';
-        trackDiv.classList.add('running');
-
-        startTimer();
-        loadStanza();
-
-        if (recognition) {
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error('음성 인식 시작 오류:', e);
-                statusDiv.innerText =
-                    '마이크를 시작할 수 없습니다. 브라우저 권한을 확인해 주세요.';
+            if (currentPercent >= 100) {
+                currentPercent = 100;
+                runners.style.left = 'calc(100% - 70px)'; // 우측 끝에 안착
+                progressPercentText.textContent = '100%';
+                
+                // 골인 시 상태 초기화 및 알림
+                document.querySelector('.track').classList.remove('running');
+                clearInterval(timerInterval);
+                isRunning = false;
+                startBtn.textContent = '▶️ 레이스 시작';
+                startBtn.style.background = '#4ade80';
+                startBtn.style.color = '#12492c';
+                
+                setTimeout(() => {
+                    alert('🎉 축하합니다! 목표 독서량을 모두 달성하여 결승선에 골인했습니다! 🏁');
+                }, 50);
+                return;
             }
-        }
-    } catch (error) {
-        console.error('게임 시작 오류:', error);
-        alert('게임 시작 중 오류가 발생했습니다: ' + error.message);
-    }
-});
 
-// [다음 차례] 버튼 이벤트
-nextBtn.addEventListener('click', () => {
-    goToNextTurn();
-});
+            // 실시간 % 이동 적용
+            runners.style.left = `calc(${currentPercent}% - ${currentPercent * 0.7}px)`;
+            progressPercentText.textContent = currentPercent + '%';
+        });
 
-// [새 게임] 버튼 이벤트
-resetBtn.addEventListener('click', () => {
-    location.reload();
-});
-
-// 타이머 시작 함수
-function startTimer() {
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        let min = Math.floor(timeLeft / 60);
-        let sec = timeLeft % 60;
-        timerDiv.innerText = `제한시간 ${min}:${sec < 10 ? '0' : ''}${sec}`;
-
-        if (timeLeft <= 0) {
+        // 처음으로 버튼 이벤트
+        resetBtn.addEventListener('click', () => {
             clearInterval(timerInterval);
-            endGame(false);
-        }
-    }, 1000);
-}
-
-// 시 구절 불러오기 및 단어 스팬 분할 처리
-function loadStanza() {
-    noticeDiv.innerText = `🏃 [${currentStudent}번 주자] 낭독 중!`;
-    
-    const poem = poemDatabase[currentPoemIndex];
-    poemTitleDiv.innerText = poem.title;
-    
-    const stanzaText = poem.stanzas[currentStanzaIndex];
-    const rawWords = stanzaText.split(/(\s+)/);
-    textDiv.innerHTML = '';
-    wordsArray = [];
-    currentWordIndex = 0;
-
-    rawWords.forEach(word => {
-        if (word.trim().length === 0) {
-            textDiv.appendChild(document.createTextNode(word));
-        } else {
-            const span = document.createElement('span');
-            span.className = 'word';
-            span.dataset.clean = word.replace(/[^가-힣a-zA-Z0-9]/g, '');
-            span.innerText = word;
-            textDiv.appendChild(span);
-            wordsArray.push(span);
-        }
-    });
-
-    if(wordsArray.length > 0) {
-        wordsArray[0].classList.add('current');
-    }
-    
-    let progress = ((currentStudent - 1) / totalStudents) * 80;
-    runners.style.left = `${10 + progress}%`;
-}
-
-// 음성 텍스트 매칭 및 실시간 형광펜 처리 로직
-function matchSpokenText(spoken) {
-    const cleanSpoken = spoken.replace(/[^가-힣a-zA-Z0-9]/g, '');
-    if (!cleanSpoken) return;
-
-    let tempIndex = currentWordIndex;
-    
+            isRunning = false;
+            seconds = 0;
+            currentPercent = 0;
+            
+            document.querySelector('.track').classList.remove('running');
+            runners.style.left = '0%';
+            timerText.textContent = '⏱️ 00:00';
+            progressPercentText.textContent = '0%';
+            
+            startBtn.textContent = '▶️ 레이스 시작';
+            startBtn.style.background = '#4ade80';
+            startBtn.style.color = '#12492c';
+        });
+    </script>
+</body>
+</html>
